@@ -1,0 +1,3 @@
+# Files to not be tracked by git
+*.h5
+*.xdmf
