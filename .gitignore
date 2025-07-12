@@ -3,3 +3,5 @@
 *.h5
 *.mat
 *.xlsx
+clones/
+.DS_Store
