@@ -20,10 +20,17 @@ __version__ = meta["Version"]
 
 logger = get_logger()
 
+import sys
+import os
+
+# Path to the ukb-atlas/src folder
+ukb_atlas_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../clones/ukb-atlas/src"))
+sys.path.insert(0, ukb_atlas_path)
+
 comm = MPI.COMM_WORLD
 mode = 0 # corresponds to a custom mode in the UKB EDES atlas
 # Load UKB EDES atlas from .mat file
-mat_data = scipy.io.loadmat("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/cardiacDL/refs/Data/BioBank_EDES_200.mat") #Replace with the actual path to your library folder
+mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat") #Replace with the actual path to your library folder
 pca = mat_data['pca200'][0, 0]
 
 # functions to reconstruct shape given PC scores
@@ -46,10 +53,10 @@ class Points(NamedTuple):
     ES: np.ndarray
 
 # import necessary ET Indices File- this is the same as the connectivity.txt file in the UKB atlas
-et_indices = np.loadtxt("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/biv-me/src/model/ETIndicesSorted.txt").astype(int) - 1 #matlab indexing to python
+et_indices = np.loadtxt("../clones/biv-me/src/model/ETIndicesSorted.txt").astype(int) - 1 #matlab indexing to python
 print(et_indices)
 # Import virtual cohort sheet
-virtual_cohort = pd.read_excel("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/cardiacDL/refs/Data/virtual_cohort_data.xlsx")
+virtual_cohort = pd.read_excel("../refs/virtual_cohort_data.xlsx")
 pc_columns = [col for col in virtual_cohort.columns if col.startswith('PC')]
 pc_scores = virtual_cohort[pc_columns]
 
@@ -59,12 +66,12 @@ patient_ed = get_ED_mesh_from_shape(patient_shape)
 patient_es = get_ES_mesh_from_shape(patient_shape)
 
 import sys
-sys.path.append("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/ukb-atlas/src")
+sys.path.append("../clones/ukb-atlas/src")
 
 import ukb
 from ukb import atlas, surface, mesh, clip
-out_dir = f"/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/output/data-full/mode_{mode}"
-outdir = Path("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/output/data-full")  / f"mode_{mode}"
+out_dir = f"output/data-full/mode_{mode}"
+outdir = Path("output/data-full")  / f"mode_{mode}"
 outdir.mkdir(parents=True, exist_ok=True)
 # custom_surface = ukb.surface.Surface()
 unwanted_nodes = (5630, 5655, 5696, 5729)
@@ -83,7 +90,7 @@ ukb.mesh.main(
     clipped=False,
 )
 
-sys.path.append("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/cardiac-geometriesx/src")
+sys.path.append("../clones/cardiac-geometriesx/src")
 import cardiac_geometries as cgx
 
 geometry = cgx.utils.gmsh2dolfin(comm=comm, msh_file = out_dir + "/ED.msh")
@@ -162,10 +169,10 @@ if create_fibers:
 
 geo = cgx.geometry.Geometry.from_folder(comm=comm, folder=outdir)
 
-sys.path.append("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/sscp25-deep-learning-cardiac-mechanics")
+# sys.path.append("/Users/rakshakonanur/Documents/SSCP25/Cardiac_Mechanics_DL/clones/sscp25-deep-learning-cardiac-mechanics")
 
-results_dir = Path("/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/output/results")
-results_dir.mkdir(parents=True, exist_ok=True)
-import run_simulation_full
-results_dir = "/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/output/results-full/"
-run_simulation_full.main(mode = mode, datadir="/mnt/c/Users/rkona/Documents/SSCP25/Cardiac_Deep_Learning/output/data-full/", resultsdir =results_dir)
+# results_dir = Path("output/results")
+# results_dir.mkdir(parents=True, exist_ok=True)
+# import run_simulation_full
+# results_dir = "/output/results-full/"
+# run_simulation_full.main(mode = mode, datadir="/output/data-full/", resultsdir =results_dir)
