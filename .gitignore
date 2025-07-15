@@ -3,5 +3,7 @@
 *.h5
 *.mat
 *.xlsx
-clones/
 .DS_Store
+src/output/
+src/patient_1
+clones/

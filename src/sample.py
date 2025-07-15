@@ -24,7 +24,7 @@ import sys
 import os
 
 # Path to the ukb-atlas/src folder
-ukb_atlas_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../clones/ukb-atlas/src"))
+ukb_atlas_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../clones/rk-ukb-atlas/src"))
 sys.path.insert(0, ukb_atlas_path)
 
 comm = MPI.COMM_WORLD
@@ -66,7 +66,7 @@ patient_ed = get_ED_mesh_from_shape(patient_shape)
 patient_es = get_ES_mesh_from_shape(patient_shape)
 
 import sys
-sys.path.append("../clones/ukb-atlas/src")
+sys.path.append("../clones/rk-ukb-atlas/src/ukb")
 
 import ukb
 from ukb import atlas, surface, mesh, clip
@@ -169,10 +169,10 @@ if create_fibers:
 
 geo = cgx.geometry.Geometry.from_folder(comm=comm, folder=outdir)
 
-# sys.path.append("/Users/rakshakonanur/Documents/SSCP25/Cardiac_Mechanics_DL/clones/sscp25-deep-learning-cardiac-mechanics")
+sys.path.append("/Users/rakshakonanur/Documents/SSCP25/Cardiac_Mechanics_DL/clones/sscp25-deep-learning-cardiac-mechanics")
 
-# results_dir = Path("output/results")
-# results_dir.mkdir(parents=True, exist_ok=True)
-# import run_simulation_full
-# results_dir = "/output/results-full/"
-# run_simulation_full.main(mode = mode, datadir="/output/data-full/", resultsdir =results_dir)
+results_dir = Path("output/results-full")
+results_dir.mkdir(parents=True, exist_ok=True)
+import run_simulation_full
+results_dir = "output/results-full/"
+run_simulation_full.main(mode = mode, datadir="output/data-full/", resultsdir =results_dir)
