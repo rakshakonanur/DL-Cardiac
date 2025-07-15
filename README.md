@@ -14,4 +14,4 @@
 5. Create a new folder in the parent directory, add the following two files:
    a. https://drive.google.com/file/d/1nGlaEU_l6eJrSsk2DGX7Uqq0DgcDJU31/view
    b. Copy the cohort data file from this directory: sscp25/Data/virtual_cohort_data.xlsx
-6. Code should run by running src/sample.py
+6. Code should run by running sample.py
