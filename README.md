@@ -10,7 +10,7 @@
    b. https://github.com/ComputationalPhysiology/cardiac-geometriesx.git
    c. https://github.com/annaqi13/sscp25.git
    d. https://github.com/UOA-Heart-Mechanics-Research/biv-me.git
-   e. https://github.com/rakshakonanur/cardiac-geometriesx.git (This is my version- so must clone this!)
+   e. https://github.com/rakshakonanur/rk-ukb-atlas.git (This is my version- so must clone this!)
 5. Create a new folder in the parent directory, add the following two files:
    a. https://drive.google.com/file/d/1nGlaEU_l6eJrSsk2DGX7Uqq0DgcDJU31/view
    b. Copy the cohort data file from this directory: sscp25/Data/virtual_cohort_data.xlsx
