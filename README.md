@@ -46,6 +46,7 @@ git pull
 python3 mesh.py
 ```
 This by-default creates meshes for all three cases.
+
 5. To run simulations on any/all cases, run:
 ```bash
 python3 simulation.py
