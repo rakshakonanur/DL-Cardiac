@@ -52,8 +52,6 @@ python3 simulation.py
 ```
 This should run the undeformed ED case by default.
 
-6. From 
-
 ## Test to check if repos on computer are out-of-date (still work-in-progress)
 In the src/ folder, run:
 ```bash
