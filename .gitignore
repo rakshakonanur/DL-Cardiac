@@ -5,6 +5,7 @@
 *.xlsx
 .DS_Store
 src/output/
+src/__pycache__/
 src/patient_1
 clones/
 README.md
