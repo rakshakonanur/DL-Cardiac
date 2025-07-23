@@ -2,7 +2,7 @@
 
 ## Steps to run simulations with custom geometries:
 
-1. In an empty folder, clone this repository using:
+1. In an empty folder (assume DL-Cardiac), clone this repository using:
 ```bash
  git clone https://github.com/rakshakonanur/DL-Cardiac.git
 ```
@@ -32,7 +32,7 @@ git clone https://github.com/rakshakonanur/rk-sscp25-deep-learning-cardiac-mecha
 ```bash
 git pull
 ```
-3. Navigate to the parent directory (above src and clones) and update the src code using:
+3. Navigate to the parent directory DL-Cardiac (above src and clones) and update the src code using:
 ```bash
 git pull
 ```
