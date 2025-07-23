@@ -46,3 +46,9 @@ This by-default creates meshes for all three cases.
 python3 simulation.py
 ```
 This should run the undeformed ED case by default.
+
+## Test to check if repos on computer are out-of-date
+In the src directory run:
+```bash
+python3 update.py
+```
