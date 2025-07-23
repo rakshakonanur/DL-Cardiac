@@ -1,0 +1,21 @@
+DL-Cardiac/
+│
+│
+├── clones/
+│    ├── biv-me
+│    ├── rk-sscp25-deep-learning-cardiac-mechanics
+│    ├── rk-ukb-atlas
+│    ├── sscp25
+│
+├── refs/
+│    ├── BioBank_EDES_200.mat
+│    ├── virtual_cohort_data.xlsx
+│
+├── src/
+    ├── mesh.py # creates the meshes of the ED, ES, and undeformed ED of a patient, references volume.py
+    ├── sample.py # Test simulation on patient-specific ED geometry 
+    ├── shape.py # creates the shape for the ED and ES from PCA scores
+    ├── simulation.py # runs simulation based on mesh.py
+    ├── update.py # run this file in src/ folder to git pull all cloned repositories
+    ├── volume.py # generates the unloaded geometries using either volumetric or volumetric+mass optimization, references sample.py
+
