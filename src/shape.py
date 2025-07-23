@@ -26,9 +26,6 @@ def load_pca(path: str):
     Returns:
         pca (dict): Dictionary containing PCA data including 'MU', 'COEFF', 'and 'LATENT'.
     """
-    # Path to the ukb-atlas/src folder
-    ukb_atlas_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../clones/rk-ukb-atlas/src"))
-    sys.path.insert(0, ukb_atlas_path)
 
     if path is None:
         path = "../refs/BioBank_EDES_200.mat"
