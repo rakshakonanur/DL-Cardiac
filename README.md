@@ -13,7 +13,6 @@
 ```
 3. Follow installation instructions from Herik's repo: https://github.com/ComputationalPhysiology/sscp25-deep-learning-cardiac-mechanics
 4. Inside the "clones" folder, clone the following repos:
-   - https://github.com/ComputationalPhysiology/cardiac-geometriesx.git
    - https://github.com/annaqi13/sscp25.git
    - https://github.com/UOA-Heart-Mechanics-Research/biv-me.git
    - https://github.com/rakshakonanur/rk-ukb-atlas.git (This is my version- so must clone this!)
