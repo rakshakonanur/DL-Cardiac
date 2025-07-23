@@ -7,10 +7,10 @@
  git clone https://github.com/rakshakonanur/DL-Cardiac.git
 ```
 2. Create a "clones" folder, which will contain editable versions of the libraries used.
-'''bash
-mkdir clones
-cd clones
-'''
+```bash
+ mkdir clones
+ cd clones
+```
 3. Follow installation instructions from Herik's repo: https://github.com/ComputationalPhysiology/sscp25-deep-learning-cardiac-mechanics
 4. Inside the "clones" folder, clone the following repos:
    - https://github.com/ComputationalPhysiology/cardiac-geometriesx.git
@@ -47,8 +47,8 @@ python3 simulation.py
 ```
 This should run the undeformed ED case by default.
 
-## Test to check if repos on computer are out-of-date
-In the src directory run:
+## Test to check if repos on computer are out-of-date (still work-in-progress)
+In the parent directory (DL-Cardiac) run:
 ```bash
 python3 update.py
 ```
