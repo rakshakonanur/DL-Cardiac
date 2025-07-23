@@ -28,15 +28,21 @@
 ``` bash
 git clone https://github.com/rakshakonanur/rk-sscp25-deep-learning-cardiac-mechanics.git
 ```
-2. Navigate to the clones/rk-ukb-atlas and update it using git pull:
+2. Navigate to the parent directory DL-Cardiac (above src and clones) and update the src code using:
 ```bash
 git pull
 ```
-3. Navigate to the parent directory DL-Cardiac (above src and clones) and update the src code using:
-```bash
-git pull
-```
-4. To create meshes for the ED, ES, and undeformed ED, run:
+3. Update this repo:
+ - Can trying using my automatic git pull tool:
+   ``` bash
+   git update.py
+   ```
+   This should update all repositories in this directory (including the cloned ones) going forward! (unless I keep forking the other cloned repos lol)
+ - Navigate to the clones/rk-ukb-atlas and update it using git pull:
+   ```bash
+   git pull
+   ```
+4. To create meshes for the ED, ES, and undeformed ED, in the src/ folder, run:
 ```bash
 python3 mesh.py
 ```
@@ -47,8 +53,10 @@ python3 simulation.py
 ```
 This should run the undeformed ED case by default.
 
+6. From 
+
 ## Test to check if repos on computer are out-of-date (still work-in-progress)
-In the parent directory (DL-Cardiac) run:
+In the src/ folder, run:
 ```bash
 python3 update.py
 ```
