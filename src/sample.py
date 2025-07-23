@@ -28,7 +28,8 @@ ukb_atlas_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../clo
 sys.path.insert(0, ukb_atlas_path)
 
 comm = MPI.COMM_WORLD
-mode = 0 # corresponds to a custom mode in the UKB EDES atlas
+mode = -1 # corresponds to a custom mode in the UKB EDES atlas
+case = "ED"  # can be "ED", "ES", or "unloaded_ED"
 # Load UKB EDES atlas from .mat file
 mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat") #Replace with the actual path to your library folder
 pca = mat_data['pca200'][0, 0]
@@ -70,8 +71,7 @@ sys.path.append("../clones/rk-ukb-atlas/src/ukb")
 
 import ukb
 from ukb import atlas, surface, mesh, clip
-out_dir = f"output/data-full/mode_{mode}"
-outdir = Path("output/data-full")  / f"mode_{mode}"
+outdir = Path("output/data-full")  / f"mode_{mode}" 
 outdir.mkdir(parents=True, exist_ok=True)
 # custom_surface = ukb.surface.Surface()
 unwanted_nodes = (5630, 5655, 5696, 5729)
@@ -80,11 +80,11 @@ points = Points(
     ES=np.delete(patient_es, unwanted_nodes, axis=0),
 )
 
-ukb.surface.main(folder=outdir, custom_points=points) # generates the various surfaces
+ukb.surface.main(case = case, folder=outdir, custom_points=points) # generates the various surfaces
 
 ukb.mesh.main(
-    folder=out_dir,
-    case="ED",
+    folder=outdir,
+    case=case,
     char_length_max=5.0,
     char_length_min=5.0,
     clipped=False,
@@ -93,7 +93,7 @@ ukb.mesh.main(
 sys.path.append("../clones/cardiac-geometriesx/src")
 import cardiac_geometries as cgx
 
-geometry = cgx.utils.gmsh2dolfin(comm=comm, msh_file = out_dir + "/ED.msh")
+geometry = cgx.utils.gmsh2dolfin(comm=comm, msh_file = outdir/case/"mesh.msh")
 std = 1.5
 case = "ED"
 char_length_max = 5.0
@@ -106,10 +106,10 @@ create_fibers = True
 
 
 if comm.rank == 0:
-    (outdir / "markers.json").write_text(
+    (outdir / case / "markers.json").write_text(
         json.dumps(geometry.markers, default=cgx.utils.json_serial)
     )
-    (outdir / "info.json").write_text(
+    (outdir / case / "info.json").write_text(
         json.dumps(
             {
                 "mode": mode,
@@ -153,7 +153,7 @@ if create_fibers:
     cgx.fibers.utils.save_microstructure(
         mesh=geometry.mesh,
         functions=(system.f0, system.s0, system.n0),
-        outdir=outdir,
+        outdir=outdir/case,
     )
 
     for k, v in system._asdict().items():
@@ -164,15 +164,15 @@ if create_fibers:
             continue
 
         logger.debug(f"Write {k}: {v}")
-        with dolfinx.io.VTXWriter(comm, outdir / f"{k}-viz.bp", [v], engine="BP4") as vtx:
+        with dolfinx.io.VTXWriter(comm, outdir / case / f"{k}-viz.bp", [v], engine="BP4") as vtx:
             vtx.write(0.0)
 
-geo = cgx.geometry.Geometry.from_folder(comm=comm, folder=outdir)
+geo = cgx.geometry.Geometry.from_folder(comm=comm, folder=outdir/case)
 
-sys.path.append("/Users/rakshakonanur/Documents/SSCP25/Cardiac_Mechanics_DL/clones/sscp25-deep-learning-cardiac-mechanics")
+sys.path.append("../clones/rk-sscp25-deep-learning-cardiac-mechanics")
 
 results_dir = Path("output/results-full")
 results_dir.mkdir(parents=True, exist_ok=True)
 import run_simulation_full
-results_dir = "output/results-full/"
-run_simulation_full.main(mode = mode, datadir="output/data-full/", resultsdir =results_dir)
+results_dir = f"output/results-full/"
+run_simulation_full.main(mode = mode, case = case, datadir="output/data-full/", resultsdir =results_dir)
