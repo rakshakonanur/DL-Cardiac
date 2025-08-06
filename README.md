@@ -51,12 +51,8 @@ This by-default creates meshes for all three cases.
 ```bash
 python3 simulation.py
 ```
-This should run the undeformed ED case by default. 
+This should run the undeformed ED case to ED --> ES by default. 
 
-To run custom settings, in terminal run:
-```bash
-python3 simulation.py --PLV=15.0 --PRV=3.0 --Ta=120.0 --N=200
-```
 ## Test to check if repos on computer are out-of-date (still work-in-progress)
 In the src/ folder, run:
 ```bash
