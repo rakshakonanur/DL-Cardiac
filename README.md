@@ -16,7 +16,7 @@
    - https://github.com/annaqi13/sscp25.git
    - https://github.com/UOA-Heart-Mechanics-Research/biv-me.git
    - https://github.com/rakshakonanur/rk-ukb-atlas.git (This is my version- so must clone this!)
-5. Create a new folder in the parent directory, add the following two files:
+5. Create a new folder in the parent directory called "refs", add the following two files:
    - https://drive.google.com/file/d/1nGlaEU_l6eJrSsk2DGX7Uqq0DgcDJU31/view
    - Copy the cohort data file from this directory: sscp25/Data/virtual_cohort_data.xlsx
 6. Code should run by running sample.py
