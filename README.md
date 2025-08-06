@@ -41,7 +41,7 @@ git pull
    ```bash
    git pull
    ```
-4. To create meshes for the ED, ES, and undeformed ED, in the src/ folder, run:
+4. To create meshes for the ED, ES, and undefoxrmed ED, in the src/ folder, run:
 ```bash
 python3 mesh.py
 ```
@@ -51,7 +51,9 @@ This by-default creates meshes for all three cases.
 ```bash
 python3 simulation.py
 ```
-This should run the undeformed ED case by default. To run custom settings, in terminal run:
+This should run the undeformed ED case by default. 
+
+To run custom settings, in terminal run:
 ```bash
 python3 simulation.py --PLV=15.0 --PRV=3.0 --Ta=120.0 --N=200
 ```
