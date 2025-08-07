@@ -76,7 +76,8 @@ class Simulation:
                         retries += 1
                     else:
                         # Some other error; re-raise
-                        raise
+                        print(f"Solver cannot converge with N = {current_N}- skipping this case.")
+                        break
 
             else:
                 print(f"❌ Failed to converge after {max_retries} retries with max N = {current_N}.")
@@ -87,11 +88,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Run cardiac mechanics simulation.")
     parser.add_argument("--case", type=str, default="unloaded_ED", help="Simulation case")
-    parser.add_argument("--PLV", type=parse_array, default=[5.0, 30.0], help="Left ventricular pressure")
-    parser.add_argument("--PRV", type=parse_array, default=[1.0, 8.0], help="Right ventricular pressure")
+    parser.add_argument("--PLV", type=parse_array, default=[20.0, 30.0], help="Left ventricular pressure")
+    parser.add_argument("--PRV", type=parse_array, default=[4.0, 8.0], help="Right ventricular pressure")
     parser.add_argument("--Ta", type=parse_array, default=[0.0, 120.0], help="Active stress time constant")
     parser.add_argument("--eta", type=float, default=0.3, help="Active stress scaling factor")
-    parser.add_argument("--N", type=np.array, default=[50, 200], help="Number of time steps for simulation")
+    parser.add_argument("--N", type=np.array, default=[200, 200], help="Number of time steps for simulation")
     parser.add_argument("--a", type=float, default=2.280, help="Material parameter a")
     parser.add_argument("--a_f", type=float, default=1.685, help="Material parameter a_f")
     parser.add_argument("--mode", type=int, default=-1, help="Simulation mode")
