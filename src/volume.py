@@ -431,7 +431,7 @@ if __name__ == "__main__":
             tolerance= 0.1,
             epsilon=0.5)
     else:
-        print("Invalid choice. Please enter 'v' or 'm'.")
+        print("Invalid choice. Please enter 'volume' or 'mass_volume'.")
 
     # Reconstruct the unloaded shape from the optimized PC scores
     unloaded_shape = shape.reconstruct_shape(unloaded_pc_scores, pca)
