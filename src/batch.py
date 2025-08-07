@@ -12,10 +12,10 @@ from pathlib import Path
 # a_vals = [0.1, 0.25, 2.0]
 # a_f_vals = [1, 20, 30]
 
-PLV_ED_vals = [10]
-PLV_ES_vals = [16, 30]
-PRV_ED_vals = [1.5]
-PRV_ES_vals = [2.67]
+PLV_ED_vals = [20]
+PLV_ES_vals = [30]
+PRV_ED_vals = [4]
+PRV_ES_vals = [8]
 a_vals = [0.25]
 a_f_vals = [20, 30]
 
@@ -31,8 +31,8 @@ data_root = base_dir / "dataset"
 data_root.mkdir(exist_ok=True)
 
 # Generate all combinations of parameters
-param_combinations = list(itertools.product(PLV_ED_vals, PLV_ES_vals,
-                                            PRV_ED_vals, PRV_ES_vals,
+param_combinations = list(itertools.product(max(PLV_ED_vals), PLV_ES_vals,
+                                            max(PRV_ED_vals), PRV_ES_vals,
                                             a_vals, a_f_vals))
 
 for patient_id in range(num_patients):
