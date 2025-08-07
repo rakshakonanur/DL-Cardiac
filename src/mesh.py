@@ -33,7 +33,7 @@ def set_path(ukb_path: str):
     from ukb import atlas, surface, mesh, clip
     return ukb, atlas, surface, mesh, clip
 class Mesh():
-    def __init__(self, ukb_atlas_path, pca_path, connectivity_path, virtual_cohort_path = None, patient_id=None):
+    def __init__(self, ukb_atlas_path, pca_path, connectivity_path, virtual_cohort_path = None, patient_id=None, optimize="volume"):
 
         self.ukb, self.atlas, self.surface, self.mesh, self.clip = set_path(ukb_atlas_path)
         pca = shape.load_pca(pca_path)
@@ -59,10 +59,7 @@ class Mesh():
         df = pd.DataFrame([vol])
         print(df)
 
-        # prompt user for optimization choice
-        choice = input("Do you want to optimize the PC scores for volume (v) or mass + volume (m)? ").strip().lower()
-
-        if choice == "m":
+        if optimize == "mass_volume":
             # Optimize for mass + volume
             unloaded_pc_scores, volume_history, mass_history = volume.find_unloaded_pcs_by_gradient_descent_mass_volume(
                 initial_pc_scores=patient,
@@ -79,7 +76,7 @@ class Mesh():
                 mass_constraint_weight=0.1  # tune this parameter, higher values put more emphasis on mass constraint (higher values will converge slower)
             )
             pass
-        elif choice == "v":
+        elif optimize == "volume":
             # Optimize for volume only
             unloaded_pc_scores = volume.find_unloaded_pcs_by_gradient_descent_volume(
                 initial_pc_scores=patient,
@@ -98,6 +95,11 @@ class Mesh():
         # Reconstruct the unloaded shape from the optimized PC scores
         unloaded_shape = shape.reconstruct_shape(unloaded_pc_scores, pca)
         self.unloaded_ed = shape.get_ED_mesh_from_shape(unloaded_shape)
+
+        # Save the unloaded_pc_scores to a file
+        unloaded_pc_scores = np.array(unloaded_pc_scores)
+        unloaded_pc_scores = pd.Series(unloaded_pc_scores, index=pc_columns)
+        unloaded_pc_scores.to_csv(f"output/unloaded_pc_scores_patient_{patient_id}.csv", index=False)
 
 
     def set_output_directory(self, mode):
@@ -207,17 +209,32 @@ if __name__ == "__main__":
     parser.add_argument("--pca_path", type=str, default=None, help="Path to the PCA .mat file.")
     parser.add_argument("--connectivity_path", type=str, default=None, help="Path to the connectivity indices file.")
     parser.add_argument("--virtual_cohort_path", type=str, default=None, help="Path to the virtual cohort data file.")
+    parser.add_argument("--patient_id", type=int, default=0, help="Patient ID (0-based index) to reconstruct shape for.")
+    parser.add_argument("--optimize",
+                    choices=["volume", "mass_volume"],
+                    default="volume",
+                    help="Optimization choice: 'volume' for volume only, 'mass_volume' for mass + volume.")
 
-    # prompt for a specific patient
-    patient_id = int(input("Enter patient ID (0-based index): "))
-    
+
     args = parser.parse_args()
+    # prompt for a specific patient
+    if args.patient_id is None:
+        print("No patient ID provided. Please enter a patient ID (0-based index):")
+        try:
+            patient_id = int(input())
+        except ValueError:
+            print("Invalid input. Using default patient ID 0.")
+            patient_id = 0
+    else:
+        patient_id = args.patient_id
+    
     mesh = Mesh(
         ukb_atlas_path="../clones/rk-ukb-atlas/src",
         pca_path=args.pca_path,
         connectivity_path=args.connectivity_path,
         virtual_cohort_path=args.virtual_cohort_path,
-        patient_id=patient_id
+        patient_id=patient_id,
+        optimize=args.optimize
     )
     mesh.set_output_directory(mode="-1")
     mesh.generate_points()
