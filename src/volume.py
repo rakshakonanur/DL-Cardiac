@@ -400,7 +400,7 @@ if __name__ == "__main__":
     # prompt user for optimization choice
     choice = input("Do you want to optimize the PC scores for volume (v) or mass + volume (m)? ").strip().lower()
 
-    if choice == "m":
+    if choice == "mass_volume":
         # Optimize for mass + volume
         unloaded_pc_scores, volume_history, mass_history = find_unloaded_pcs_by_gradient_descent_mass_volume(
             initial_pc_scores=patient,
@@ -417,7 +417,7 @@ if __name__ == "__main__":
             mass_constraint_weight=0.1  # tune this parameter, higher values put more emphasis on mass constraint (higher values will converge slower)
         )
         pass
-    elif choice == "v":
+    elif choice == "volume":
         # Optimize for volume only
         unloaded_pc_scores = find_unloaded_pcs_by_gradient_descent_volume(
             initial_pc_scores=patient,
