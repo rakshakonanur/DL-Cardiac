@@ -2,6 +2,11 @@ import sys
 from pathlib import Path
 import numpy as np
 
+def parse_array(s):
+    # Accepts strings like "[1.0, 2.0]" or "1.0,2.0"
+    s = s.strip("[]")
+    return np.array([float(x) for x in s.split(",")])
+
 class Simulation:
     def __init__(self, mode: int = -1, case = "unloaded_ED",
                  results_dir: str = "output/results-full", 
@@ -36,25 +41,57 @@ class Simulation:
         self.results_dir.mkdir(parents=True, exist_ok=True)
         self.solver_path = solver_path
 
-    def run(self):
+    def run(self, max_retries: int = 5):
         for case in self.cases:
             sys.path.append(self.solver_path)
             import run_simulation_full
-            print("Material parameters:", self.a, self.a_f)
-            run_simulation_full.main(mode = self.mode, case = case, datadir=self.data_dir, resultsdir = self.results_dir,
-                                     PLV = self.PLV, PRV = self.PRV, TA = self.Ta, N = self.N, eta = self.eta,
-                                     a = self.a, a_f = self.a_f)
+
+            retries = 0
+            current_N = self.N
+
+            while retries <= max_retries:
+                try:
+                    print(f"Running with N = {current_N}")
+                    run_simulation_full.main(
+                        mode=self.mode,
+                        case=case,
+                        datadir=self.data_dir,
+                        resultsdir=self.results_dir,
+                        PLV=self.PLV,
+                        PRV=self.PRV,
+                        TA=self.Ta,
+                        N=current_N,
+                        eta=self.eta,
+                        a=self.a,
+                        a_f=self.a_f
+                    )
+                    print("✅ Simulation converged successfully.")
+                    break  # Exit retry loop on success
+
+                except RuntimeError as e:
+                    # Check if error is convergence-related
+                    if "convergence" in str(e).lower() or "did not converge" in str(e).lower():
+                        print(f"⚠️ Solver failed to converge with N = {current_N}. Retrying with N = {2 * current_N}...")
+                        current_N =[current_N[0] * 2, current_N[1]]
+                        retries += 1
+                    else:
+                        # Some other error; re-raise
+                        raise
+
+            else:
+                print(f"❌ Failed to converge after {max_retries} retries with max N = {current_N}.")
+
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Run cardiac mechanics simulation.")
     parser.add_argument("--case", type=str, default="unloaded_ED", help="Simulation case")
-    parser.add_argument("--PLV", type=np.array, default=[20.0, 30.0], help="Left ventricular pressure")
-    parser.add_argument("--PRV", type=np.array, default=[4.0, 6.0], help="Right ventricular pressure")
-    parser.add_argument("--Ta", type=np.array, default=[0.0, 120.0], help="Active stress time constant")
+    parser.add_argument("--PLV", type=parse_array, default=[20.0, 30.0], help="Left ventricular pressure")
+    parser.add_argument("--PRV", type=parse_array, default=[4.0, 6.0], help="Right ventricular pressure")
+    parser.add_argument("--Ta", type=parse_array, default=[0.0, 120.0], help="Active stress time constant")
     parser.add_argument("--eta", type=float, default=0.3, help="Active stress scaling factor")
-    parser.add_argument("--N", type=np.array, default=[400, 200], help="Number of time steps for simulation")
+    parser.add_argument("--N", type=np.array, default=[200, 200], help="Number of time steps for simulation")
     parser.add_argument("--a", type=float, default=2.280, help="Material parameter a")
     parser.add_argument("--a_f", type=float, default=1.685, help="Material parameter a_f")
     parser.add_argument("--mode", type=int, default=-1, help="Simulation mode")
