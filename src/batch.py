@@ -21,8 +21,8 @@ PRV_ES = 8
 
 a = 2.280
 a_f = 1.685
-x = 0.3
-n_max = 2  # number of steps in each direction (positive and negative)
+x = 1
+n_max = 1  # number of steps in each direction (positive and negative)
 
 def generate_sorted_array(center, x, n_max):
     result = [center]
@@ -32,7 +32,8 @@ def generate_sorted_array(center, x, n_max):
     return result
 
 a_array = generate_sorted_array(a, x, n_max)
-a_f_array = generate_sorted_array(a_f, x, n_max)
+a_f_array = [1.685, 20, 30]
+# a_f_array = a_f_array[1:]
 
 print("a_array:", a_array)
 print("a_f_array:", a_f_array)
@@ -121,7 +122,7 @@ for patient_id in range(start_patient, end_patient):
             # After completion, analyze the output
             if output_lines:
                 last_line = output_lines[-1].strip()
-                success = last_line.lower() == "true"
+                success = last_line.lower() == "True"
                 if success:
                     success_cases.append((a, a_f, PLV_ED, PRV_ED))
                 else:
