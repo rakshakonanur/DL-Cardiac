@@ -32,8 +32,14 @@ def set_path(ukb_path: str):
     import ukb, cardiac_geometries as cgx
     from ukb import atlas, surface, mesh, clip
     return ukb, atlas, surface, mesh, clip
+
+def set_output_directory(mode, patient_id):
+    outdir = Path(f"patient_{patient_id}/data-full") / f"mode_{mode}"
+    outdir.mkdir(parents=True, exist_ok=True)
+    return outdir
+
 class Mesh():
-    def __init__(self, ukb_atlas_path, pca_path, connectivity_path, virtual_cohort_path = None, patient_id=None, optimize="volume"):
+    def __init__(self, ukb_atlas_path, pca_path, connectivity_path, mode, virtual_cohort_path = None, patient_id=None, optimize="volume"):
 
         self.ukb, self.atlas, self.surface, self.mesh, self.clip = set_path(ukb_atlas_path)
         pca = shape.load_pca(pca_path)
@@ -46,6 +52,7 @@ class Mesh():
         patient_shape = shape.reconstruct_shape(score = patient, atlas = pca)
         self.patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
         self.patient_es = shape.get_ES_mesh_from_shape(patient_shape)
+        self.patient_id = patient_id
         # test calculating the volumes
         vol = volume.find_volume(self.patient_ed)
 
@@ -96,16 +103,15 @@ class Mesh():
         unloaded_shape = shape.reconstruct_shape(unloaded_pc_scores, pca)
         self.unloaded_ed = shape.get_ED_mesh_from_shape(unloaded_shape)
 
+        self.outdir = set_output_directory(mode, patient_id)
+        self.mode = mode
+    
         # Save the unloaded_pc_scores to a file
         unloaded_pc_scores = np.array(unloaded_pc_scores)
         unloaded_pc_scores = pd.Series(unloaded_pc_scores, index=pc_columns)
-        unloaded_pc_scores.to_csv(f"output/unloaded_pc_scores_patient_{patient_id}.csv", index=False)
+        unloaded_pc_scores.to_csv(f"patient_{self.patient_id}/unloaded_pc_scores_patient_{patient_id}.csv", index=False)
 
 
-    def set_output_directory(self, mode):
-        self.mode = mode
-        self.outdir = Path("output/data-full") / f"mode_{mode}"
-        self.outdir.mkdir(parents=True, exist_ok=True)
 
     def generate_points(self):
         unwanted_nodes = (5630, 5655, 5696, 5729)
@@ -232,11 +238,11 @@ if __name__ == "__main__":
         ukb_atlas_path="../clones/rk-ukb-atlas/src",
         pca_path=args.pca_path,
         connectivity_path=args.connectivity_path,
+        mode=-1,
         virtual_cohort_path=args.virtual_cohort_path,
         patient_id=patient_id,
         optimize=args.optimize
     )
-    mesh.set_output_directory(mode="-1")
     mesh.generate_points()
     mesh.generate_surfaces()
     mesh.generate_surface_mesh()
