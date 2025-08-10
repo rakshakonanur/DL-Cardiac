@@ -31,8 +31,10 @@ def generate_sorted_array(center, x, n_max):
         result.append(center - n * x)
     return result
 
-a_array = generate_sorted_array(a, x, n_max)
+# a_array = [generate_sorted_array(a, x, n_max)]
+a_array = [a, a+1]
 a_f_array = [1.685, 20, 30]
+# a_array = a_array[2:]
 # a_f_array = a_f_array[1:]
 
 print("a_array:", a_array)
@@ -45,8 +47,8 @@ num_patients = 10  # or any number you want
 param_combinations = list(itertools.product(a_array, a_f_array, PLV_ED_vals, PRV_ED_vals))
 
 count = 0
-start_patient = 0
-end_patient = 10
+start_patient = 110
+end_patient = 112
 
 # Stores the number of retries for meshing
 max_retries = 2
@@ -93,7 +95,7 @@ for patient_id in range(start_patient, end_patient):
         try:
             # Command to run simulation.py with parameters
             cmd = [
-                "mpirun", "-n", "30",
+                "mpirun", "-n", "16",
                 "python", "simulation.py",
                 "--patient_id", str(patient_id),
                 "--PLV", str(plv),
@@ -122,7 +124,7 @@ for patient_id in range(start_patient, end_patient):
             # After completion, analyze the output
             if output_lines:
                 last_line = output_lines[-1].strip()
-                success = last_line.lower() == "True"
+                success = last_line.lower() == "true"
                 if success:
                     success_cases.append((a, a_f, PLV_ED, PRV_ED))
                 else:
@@ -136,17 +138,17 @@ for patient_id in range(start_patient, end_patient):
             failure_cases.append((a, a_f, PLV_ED, PRV_ED))
         
 
-# Save results for later analysis (optional)
-import csv
+    # Save results for later analysis (optional)
+    import csv
 
-with open("success_cases.csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["a", "a_f", "PLV_ED", "PRV_ED"])
-    writer.writerows(success_cases)
+    with open(f"success_cases_{patient_id}.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["a", "a_f", "PLV_ED", "PRV_ED"])
+        writer.writerows(success_cases)
 
-with open("failure_cases.csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(["a", "a_f", "PLV_ED", "PRV_ED"])
-    writer.writerows(failure_cases)
+    with open(f"failure_cases_{patient_id}.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["a", "a_f", "PLV_ED", "PRV_ED"])
+        writer.writerows(failure_cases)
 
 print("\n✅ All simulations complete.")
