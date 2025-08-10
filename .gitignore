@@ -9,3 +9,7 @@ src/__pycache__/
 src/patient_1
 clones/
 README.md
+patient*
+failure*
+success*
+error*
