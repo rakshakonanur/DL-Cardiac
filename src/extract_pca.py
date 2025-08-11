@@ -178,9 +178,13 @@ def resample(
         values_flat[dof_id] = f[vtx_id, comp]
 
     # Assign to u
-    u.x.array[:] = values_flat
+    u.x.array[:] = f[vert_index, :].reshape(-1)
     # u.x.array[:] = 0
     u.x.scatter_forward()
+
+    # with dolfinx.io.VTXWriter(comm, "test.bp", u, engine="BP4") as vtx:
+    #     vtx.write(0.0)
+    # exit()
 
     print("u.x.array shape:", u.x.array.shape)
     print("u.x.array min/max:", u.x.array.min(), u.x.array.max())
