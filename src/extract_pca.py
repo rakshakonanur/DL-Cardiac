@@ -83,20 +83,27 @@ def project_patient_to_atlas(patient_shape_flat, atlas, numModes = 10):
     return projectedScores
 
 def sample_points_on_triangles_uniform(points, triangles, n_samples):
-    tri_pts = points[triangles]  # (num_triangles, 3, 3)
+    tri_pts = points[triangles]
     vec0 = tri_pts[:, 1] - tri_pts[:, 0]
     vec1 = tri_pts[:, 2] - tri_pts[:, 0]
     cross_prod = np.cross(vec0, vec1)
     tri_areas = 0.5 * np.linalg.norm(cross_prod, axis=1)
     tri_probs = tri_areas / np.sum(tri_areas)
-    # Calculate number of points per triangle proportional to area
-    samples_per_triangle = np.round(tri_probs * n_samples).astype(int)
-    samples_per_triangle[-1] += n_samples - np.sum(samples_per_triangle)  # fix rounding
+
+    # Allocate floor values first
+    samples_per_triangle = np.floor(tri_probs * n_samples).astype(int)
+
+    # Distribute remaining points to largest fractional parts
+    fractional_parts = tri_probs * n_samples - np.floor(tri_probs * n_samples)
+    leftover = n_samples - np.sum(samples_per_triangle)
+    if leftover > 0:
+        top_indices = np.argsort(fractional_parts)[::-1][:leftover]
+        samples_per_triangle[top_indices] += 1
+
     sampled_points = []
     for tri_idx, n_pts in enumerate(samples_per_triangle):
         if n_pts == 0:
             continue
-        # Find m so that m*(m+1)/2 >= n_pts (triangular grid barycentric coords)
         m = int(np.ceil((np.sqrt(8 * n_pts + 1) - 1) / 2))
         bary_coords = []
         count = 0
@@ -180,9 +187,6 @@ def resample(
     u.x.array[:] = f[vert_index, :].reshape(-1)
     u.x.scatter_forward()
     print("Updated function u with displacement values.", flush=True)
-
-    with dolfinx.io.VTXWriter(comm, "test.bp", u, engine="BP4") as vtx:
-        vtx.write(0.0)
 
     # Now load the STL meshes and combine RV and RVFW
     points = {}
@@ -300,11 +304,12 @@ def resample(
     np.savetxt(outdir / f"resample_ordered_coordinates_{case}.txt", all_sampled_points, fmt="%.6f")
     print(f"Saved {all_sampled_points.shape[0]} points in total at {outdir}.", flush=True)
 
+
 if __name__ == "__main__":
 
-    patient_id = 0
-    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
-    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
+    patient_id = 71
+    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
+    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
     resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
     resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"),case="ES")
 
