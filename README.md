@@ -1,5 +1,7 @@
 # DL-Cardiac
 
+Repository to generate and simulate patient-specific cardiac mechanics using anonymized data from the UK Biobank. The code also can be used to generate training data for machine-learning applications.
+
 ## Get Started:
 
 1. In an empty folder (assume DL-Cardiac), clone this repository using:
