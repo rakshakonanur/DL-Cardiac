@@ -13,3 +13,6 @@ patient*
 failure*
 success*
 error*
+datasets/
+predicted/
+true/
