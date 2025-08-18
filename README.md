@@ -47,6 +47,7 @@ To make sure code is up-to-date, follow either of the following:
 git pull
 ```
 Repeat this command in each of the cloned repositories.
+
 2. To automatically update this repo (still testing):
 In the src/ folder, run:
 ```bash
