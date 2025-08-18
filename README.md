@@ -33,12 +33,14 @@ python3 sample.py
 python3 mesh.py
 ```
 This by-default creates meshes for all three cases.
+
 2. The simulation.py code is set to generate training data for a particular patient. To run simulations on a singular case, use command-line arguments. For example:
 ```bash
 python3 simulation.py --single_case True --PLV 15.0 --PRV 3.0 --Ta 120.0 --N 200
 ```
 Excluding these command-line arguments will result in the running all pressures/material properties combination for that patient. This script can be run in parallel.
 Final results are recommended to be visualized in Paraview.
+
 3. For generating the final training dataset, the simulation results must be moved to datasets/ (same level as clones and src). 
 
 ## Updating Code:
