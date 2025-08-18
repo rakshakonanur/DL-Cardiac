@@ -173,6 +173,6 @@ sys.path.append("../clones/rk-sscp25-deep-learning-cardiac-mechanics")
 
 results_dir = Path("output/results-full")
 results_dir.mkdir(parents=True, exist_ok=True)
-import run_simulation_full
+import run_simulation_single
 results_dir = f"output/results-full/"
-run_simulation_full.main(mode = mode, case = case, datadir="output/data-full/", resultsdir =results_dir)
+run_simulation_single.main(mode = mode, case = case, datadir="output/data-full/", resultsdir =results_dir)
