@@ -2,6 +2,8 @@ import pandas as pd
 import glob
 import os
 import re
+from pathlib import Path
+from extract_pca import resample, main
 
 # Path to dataset
 dataset_path = "../datasets/final"
@@ -14,7 +16,10 @@ rows = []
 
 for patient_dir in sorted(glob.glob(os.path.join(dataset_path, "patient_*")), key=patient_num):
     patient_name = os.path.basename(patient_dir)
-    
+    patient_id = int(patient_name.split("_")[1])
+    print(f"Processing {patient_name}...")
+
+    rows = []
     # Find PCA file
     pca_file = glob.glob(os.path.join(patient_dir, "unloaded_pc_scores_*.csv"))
     if not pca_file:
@@ -41,12 +46,30 @@ for patient_dir in sorted(glob.glob(os.path.join(dataset_path, "patient_*")), ke
         except (IndexError, ValueError):
             continue  # skip malformed filename
         
-        row = [patient_name] + pca_flat + [lv_ed, lv_es, rv_ed, rv_es, a_val, af_val]
+        ES_file = result_file
+        ED_file = os.path.join(results_path, f"unloaded_to_ED_PLVED_{lv_ed:.2f}__PRVED_{rv_ed:.2f}__TA_0.0__a_{a_val:.2f}__af_{af_val:.2f}.bp")
+        resample(bpl=ED_file, mode=-1, datadir=Path(f"../datasets/final/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/final/patient_{patient_id}/results-full"), case="ED")
+        resample(bpl=ES_file, mode=-1, datadir=Path(f"../datasets/final/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/final/patient_{patient_id}/results-full"), case="ES")
+        outdir = Path(f"../datasets/final/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
+        deformed_pca, volume = main(outdir)
+        volume_items = [volume[k] for k in sorted(volume.keys())]  # sorted keeps it consistent
+
+        row = [patient_name] + pca_flat + [lv_ed, lv_es, rv_ed, rv_es, a_val, af_val] + deformed_pca.tolist() + volume_items
         rows.append(row)
 
-columns = ["Patient"] + [f"PCA{i+1}" for i in range(10)] + ["LV_ED", "LV_ES", "RV_ED", "RV_ES", "a", "a_f"]
+    columns = (["Patient"] + [f"PCA{i+1}" for i in range(10)] + 
+               ["LV_ED", "LV_ES", "RV_ED", "RV_ES", "a", "a_f"] + 
+               [f"defPCA{i+1}" for i in range(10)] + sorted(volume.keys()))  # column names match the order of values
 
-df = pd.DataFrame(rows, columns=columns)
-df.to_csv("aggregated_results.csv", index=False)
+    df = pd.DataFrame(rows, columns=columns)
+    output_file = "aggregated_results.csv"
+
+    # Append mode, but write header only if file doesn't exist or is empty
+    df.to_csv(
+        output_file,
+        mode='a',
+        header=not os.path.exists(output_file) or os.path.getsize(output_file) == 0,
+        index=False
+    )
 
 print("Saved aggregated_results.csv")
