@@ -1,21 +1,27 @@
 import sys
 from pathlib import Path
 import numpy as np
+import collections.abc
 
-def parse_array(s):
-    # Accepts strings like "[1.0, 2.0]" or "1.0,2.0"
+def parse_array_return_float(s):
+    # Accepts "[1.0, 2.0]", "1.0,2.0" or just "1.0"
     s = s.strip("[]")
-    return np.array([float(x) for x in s.split(",")])
+    parts = s.split(",")
+    return np.array([float(x) for x in parts]) if len(parts) > 1 else float(parts[0])
+
+def parse_array_return_int(s):
+    # Accepts "[1.0, 2.0]", "1.0,2.0" or just "1.0"
+    s = s.strip("[]")
+    parts = s.split(",")
+    return np.array([float(x) for x in parts]) if len(parts) > 1 else int(parts[0])
 
 class Simulation:
-    def __init__(self, mode: int = -1, case = "unloaded_ED",
+    def __init__(self, mode: int = -1, case="unloaded_ED",
+                 single_case: bool = False,
                  results_dir: str = f"patient_0/results-full", 
                  data_dir: str = f"patient_0/data-full/", 
                  solver_path: str = "../clones/rk-sscp25-deep-learning-cardiac-mechanics",
-                 PLV: np.array = [30.0, 40.0],
-                 PRV: np.array = [6.0, 8.0],
-                 Ta: np.array = [0.0, 120.0],
-                 N: np.array = [500, 200],
+                 PLV=None, PRV=None, Ta=None, N=None,
                  eta: float = 0.3,
                  a: float = 2.280,
                  a_f: float = 1.685):
@@ -24,11 +30,12 @@ class Simulation:
         if case == "both":
             cases = ["ED", "ES"]
         elif case == "all":
-            cases = ["ED","ES","unloaded_ED"]
+            cases = ["ED", "ES", "unloaded_ED"]
         else:
             cases = [case]
 
         self.cases = cases
+        self.single_case = single_case
         self.PLV = PLV
         self.PRV = PRV
         self.Ta = Ta
@@ -44,7 +51,11 @@ class Simulation:
     def run(self, max_retries: int = 3):
         for case in self.cases:
             sys.path.append(self.solver_path)
-            import run_simulation_full
+            if self.single_case:
+                import run_simulation_single as run_simulation
+            else:
+                import run_simulation_full as run_simulation
+                # Import the full simulation module only if not in single case mode
 
             retries = 0
             current_N = self.N
@@ -52,7 +63,7 @@ class Simulation:
             while retries <= max_retries:
                 try:
                     print(f"Running with N = {current_N}")
-                    run_simulation_full.main(
+                    run_simulation.main(
                         mode=self.mode,
                         case=case,
                         datadir=self.data_dir,
@@ -92,11 +103,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Run cardiac mechanics simulation.")
     parser.add_argument("--case", type=str, default="unloaded_ED", help="Simulation case")
-    parser.add_argument("--PLV", type=parse_array, default=[20.0, 30.0], help="Left ventricular pressure")
-    parser.add_argument("--PRV", type=parse_array, default=[4.0, 8.0], help="Right ventricular pressure")
-    parser.add_argument("--Ta", type=parse_array, default=[0.0, 120.0], help="Active stress time constant")
+    parser.add_argument("--single_case", default=False, help="Run a single case - not for generating training data")
+    parser.add_argument("--PLV", type=parse_array_return_float, default=[20.0, 30.0], help="Left ventricular pressure")
+    parser.add_argument("--PRV", type=parse_array_return_float, default=[4.0, 8.0], help="Right ventricular pressure")
+    parser.add_argument("--Ta", type=parse_array_return_float, default=[0.0, 120.0], help="Active stress time constant")
     parser.add_argument("--eta", type=float, default=0.3, help="Active stress scaling factor")
-    parser.add_argument("--N", type=np.array, default=[100, 150], help="Number of time steps for simulation")
+    parser.add_argument("--N", type=parse_array_return_int, default=[100, 150], help="Number of time steps for simulation")
     parser.add_argument("--a", type=float, default=2.280, help="Material parameter a")
     parser.add_argument("--a_f", type=float, default=1.685, help="Material parameter a_f")
     parser.add_argument("--mode", type=int, default=-1, help="Simulation mode")
@@ -106,7 +118,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     patient_id = args.patient_id
 
-    sim = Simulation(mode=args.mode, results_dir=Path(f"patient_{patient_id}/results-full"), 
+    sim = Simulation(mode=args.mode, single_case=args.single_case, results_dir=Path(f"patient_{patient_id}/results-full"),
                      data_dir=Path(f"patient_{patient_id}/data-full"), solver_path=args.solver_path,
                      PLV=args.PLV, PRV=args.PRV, Ta=args.Ta, N=args.N,
                      a=args.a, a_f=args.a_f)
