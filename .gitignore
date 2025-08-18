@@ -3,6 +3,7 @@
 *.h5
 *.mat
 *.xlsx
+*.bp
 .DS_Store
 src/output/
 src/__pycache__/
