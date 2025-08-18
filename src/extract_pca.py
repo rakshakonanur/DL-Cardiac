@@ -62,6 +62,7 @@ def procrustes(X,Y,scaling=True,reflection='best'):
     c = muX-b*np.dot(muY,T)
     # Transformation values 
     tform = {'rotation':T,'scale':b,'translation':c}
+    print(f"Procrustes analysis: d={d:.4f}, scale={b:.4f}, translation={c}")
     #return d, Z, tform
     return T, c
 
@@ -304,17 +305,7 @@ def resample(
     np.savetxt(outdir / f"resample_ordered_coordinates_{case}.txt", all_sampled_points, fmt="%.6f")
     print(f"Saved {all_sampled_points.shape[0]} points in total at {outdir}.", flush=True)
 
-
-if __name__ == "__main__":
-
-    patient_id = 71
-    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
-    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
-    resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
-    resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"),case="ES")
-
-    outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
-
+def main(outdir):
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
     # Load files
@@ -349,17 +340,23 @@ if __name__ == "__main__":
 
     # Update paths here
     # pc = h5.File(file_path_in + 'UKBRVLV_All.h5', 'r')
-    projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=25)
+    projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=10)
     
     print("Projected scores:", projectedScores[0])
     
-    patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=25)
+    patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=10)
     patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
     patient_es = shape.get_ES_mesh_from_shape(patient_shape)
     vol_ed = volume.find_volume(patient_ed)
     print("ED Volume:", vol_ed)
     vol_es = volume.find_volume(patient_es)
     print("ES Volume:", vol_es)
+
+    # Flatten into one dict
+    flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
+    flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
+
+    # print(flattened)
 
     def set_path(ukb_path: str):
     # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
@@ -379,6 +376,18 @@ if __name__ == "__main__":
         unloaded_ED=np.delete(patient_ed, unwanted_nodes, axis=0),
     )
 
-    ukb.surface.main(case="both", folder=Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), custom_points=points)
+    ukb.surface.main(case="both", folder=outdir, custom_points=points)
+    return projectedScores[0], flattened
 
+if __name__ == "__main__":
 
+    patient_id = 0
+    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
+    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
+    resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
+    resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"),case="ES")
+
+    outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
+    main(outdir)
+
+    
