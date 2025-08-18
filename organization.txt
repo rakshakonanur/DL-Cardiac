@@ -16,10 +16,18 @@ DL-Cardiac/
 │    ├── virtual_cohort_data.xlsx
 │
 ├── src/
+    ├── batch.py # File to loop through different ED/material properties for a given set of patients- calls mesh.py, simulation.py
+    ├── extract_pca.py # extract PCA scores from the deformed meshes
+    ├── inverse_ML.py # template for inverse ML model
     ├── mesh.py # creates the meshes of the ED, ES, and undeformed ED of a patient, references volume.py
+    ├── ML.py # MLP surrogate model
+    ├── postprocessing.py # code to loop through all results, extract PCA scores, and store in a .csv for generating training data
     ├── sample.py # Test simulation on patient-specific ED geometry 
     ├── shape.py # creates the shape for the ED and ES from PCA scores
     ├── simulation.py # runs simulation based on mesh.py
+    ├── test.py # writes out .bp files for visualization from PCA scores
     ├── update.py # run this file in src/ folder to git pull all cloned repositories
     ├── volume.py # generates the unloaded geometries using either volumetric or volumetric+mass optimization, references sample.py
+    ├── aggregated--.csv # training/test data
+
 
