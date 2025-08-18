@@ -20,7 +20,10 @@
 5. Create a new folder in the parent directory called "refs", add the following two files:
    - https://drive.google.com/file/d/1nGlaEU_l6eJrSsk2DGX7Uqq0DgcDJU31/view
    - Copy the cohort data file from this directory: sscp25/Data/virtual_cohort_data.xlsx
-6. Code should run by running sample.py
+6. Sample code can be run using:
+```bash
+python3 sample.py
+```
 
 ## Running Code:
 1. To create meshes for the ED, ES, and undefoxrmed ED, in the src/ folder, run:
