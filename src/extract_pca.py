@@ -335,9 +335,6 @@ def main(outdir):
     example_1d_es = example_3d_es.flatten()
     example_flattened = np.concatenate((example_1d_ed, example_1d_es))
 
-    # Load shape atlas
-    file_path_in = '../clones/SSA_tutorial/' #replace with your file path
-
     # Update paths here
     # pc = h5.File(file_path_in + 'UKBRVLV_All.h5', 'r')
     projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=10)
