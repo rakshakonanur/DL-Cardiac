@@ -41,7 +41,29 @@ python3 simulation.py --single_case True --PLV 15.0 --PRV 3.0 --Ta 120.0 --N 200
 Excluding these command-line arguments will result in the running all pressures/material properties combination for that patient. This script can be run in parallel.
 Final results are recommended to be visualized in Paraview.
 
-3. For generating the final training dataset, the simulation results must be moved to datasets/ (same level as clones and src). 
+3. To run simulations in batch, adjust the ED values, material properties, and patient ID in batch.py. The code will automatically loop through all combinations.
+```bash
+python3 batch.py
+```
+
+4. To extract the PCA scores from the deformed meshes, either manually point to the ED and ES files in the main function of extract_pca.py and run:
+```bash
+python3 extract_pca.py
+```
+Or, if batch-extraction is required, move all patients to datasets/final/ (sister of clones and src). Then run:
+```bash
+python3 postprocessing.py
+```
+This will automatically extract the PCA scores from the simulation results, and combine them into a large table. Details of volume/mass are also included.
+
+5. To run the Machine Learning code, run:
+```bash
+python3 ML.py
+```
+The code currently trains on all patients exluding patient_id=5. This is used for testing. A random material/pressure condition is chosen, and its true/predicted deformed PCA are displayed. These PCA scores can be visualized by copying them into test.py and running:
+```bash
+python3 test.py
+```
 
 ## Updating Code:
 
