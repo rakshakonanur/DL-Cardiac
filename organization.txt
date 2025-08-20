@@ -27,6 +27,7 @@ DL-Cardiac/
     ├── simulation.py # runs simulation based on mesh.py
     ├── test.py # writes out .bp files for visualization from PCA scores
     ├── update.py # run this file in src/ folder to git pull all cloned repositories
+    ├── validate_pca.py # validate the PCA extraction using the undeformed meshes
     ├── volume.py # generates the unloaded geometries using either volumetric or volumetric+mass optimization, references sample.py
     ├── aggregated--.csv # training/test data
 
