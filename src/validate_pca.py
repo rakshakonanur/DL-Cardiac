@@ -179,7 +179,7 @@ if __name__ == "__main__":
     patient_id = 0
     ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
     u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
-    points_ED, ES = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED")
+    points_ED, ES = deform(patient_id=patient_id)
 
     outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=25)
     
     print("Projected scores:", projectedScores[0])
-    
+
     patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=25)
     patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
     patient_es = shape.get_ES_mesh_from_shape(patient_shape)
