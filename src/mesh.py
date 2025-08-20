@@ -49,7 +49,7 @@ class Mesh():
         pc_scores = virtual_cohort[pc_columns]
         patient = list(pc_scores.loc[patient_id,:])
         patient = pc_scores.loc[patient_id].to_numpy()  # Example: get the specified patient's PC scores
-        patient_shape = shape.reconstruct_shape(score = patient, atlas = pca)
+        patient_shape = shape.reconstruct_shape(score = patient, atlas = pca, num_scores=25)
         self.patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
         self.patient_es = shape.get_ES_mesh_from_shape(patient_shape)
         self.patient_id = patient_id
