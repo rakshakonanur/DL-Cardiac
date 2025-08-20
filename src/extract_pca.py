@@ -191,11 +191,10 @@ def resample(
     print("Updated function u with displacement values.", flush=True)
     return u.x.array[:].reshape(-1,3),dof_coords, geodir
 
-def deform(outdir, u, geodir, coords, case):
+def deform(outdir, u, geodir, coords, case, patient_id):
 
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
-    patient_id = 0
     patient = pd.read_csv(f"test/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv").to_numpy()
     patient_shape = shape.reconstruct_shape(score = patient.ravel()[:25], atlas = pca, num_scores=25)
     print("PC scores for patient", patient_id, ":", patient.ravel(), flush=True)
@@ -401,8 +400,8 @@ if __name__ == "__main__":
     u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
     u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ES")
 
-    points_ED = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED")
-    points_ES = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, coords, case="ES")
+    points_ED = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED", patient_id=patient_id)
+    points_ES = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, coords, case="ES", patient_id=patient_id)
 
     outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
