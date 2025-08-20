@@ -127,11 +127,10 @@ def resample(
     print("Updated function u with displacement values.", flush=True)
     return u.x.array[:].reshape(-1,3),dof_coords, geodir
 
-def deform(outdir, u, geodir, coords, case):
+def deform(patient_id):
 
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
-    patient_id = 0
     patient = pd.read_csv(f"test/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv").to_numpy()
     patient_shape = shape.reconstruct_shape(score = patient.ravel()[:25], atlas = pca, num_scores=25)
     print("PC scores for patient", patient_id, ":", patient.ravel(), flush=True)
@@ -179,27 +178,20 @@ if __name__ == "__main__":
 
     patient_id = 0
     ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
-    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
     u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
-    u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ES")
-
     points_ED, ES = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED")
 
     outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
-    # main(patient_ED=points_ED, patient_ES=points_ES, unloaded=coords)
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
 
     example_1d_ed = points_ED.flatten()
-    # example_1d_es = points_ES.flatten()
     example_flattened = np.concatenate((example_1d_ed, ES.flatten()))
 
-    # Update paths here
-    # pc = h5.File(file_path_in + 'UKBRVLV_All.h5', 'r')
     projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=25)
     
     print("Projected scores:", projectedScores[0])
-
+    
     patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=25)
     patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
     patient_es = shape.get_ES_mesh_from_shape(patient_shape)
