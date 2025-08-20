@@ -60,11 +60,7 @@ def project_patient_to_atlas(patient_shape_flat, atlas, numModes = 10):
     COEFF = np.transpose(atlas["COEFF"]) # PCA eigenvectors (basis)
     LATENT = np.transpose(atlas["LATENT"]) # PCA eigenvalues (variances)
     patient3D = patient_shape_flat.reshape(-1, 3)
-    mean3D = np.array(np.transpose(MU)).reshape(-1, 3)
-
-    # Procrustes alignment
     patient1Daligned = patient3D.flatten()
-
     patient1Dnormalized = patient1Daligned - np.transpose(MU) # center the patient shape for PCA projection
     projectedScores = np.dot(patient1Dnormalized, np.transpose(COEFF[0:numModes,:])) / np.sqrt(np.array(np.transpose(LATENT[0,0:numModes]))) 
     # project the patient shape onto the PCA basis by taking the dot product with the first numModes eigenvectors and normalizing by the square root of the eigenvalues
