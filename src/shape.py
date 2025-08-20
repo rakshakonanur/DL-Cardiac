@@ -39,6 +39,7 @@ def load_pca(path: str):
 def reconstruct_shape(score, atlas, num_scores = 25):
     d = score * np.sqrt(atlas["LATENT"][0:num_scores]).T
     shape = atlas["MU"] + np.matmul(d, atlas["COEFF"][:, :num_scores].T)
+    print(f"Reconstructed shape with {num_scores} scores has size {shape.shape}.", flush=True)
     return shape.T
 
 # Extract ED phase as (N, 3) mesh
