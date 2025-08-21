@@ -129,11 +129,11 @@ def resample(
     print("Updated function u with displacement values.", flush=True)
     return u.x.array[:].reshape(-1,3),dof_coords, geodir
 
-def deform(outdir, u, geodir, coords, case, patient_id):
+def deform(outdir, u, geodir, csv_dir, coords, case, patient_id):
 
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
-    patient = pd.read_csv(f"test/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv").to_numpy()
+    patient = pd.read_csv(csv_dir).to_numpy()
     patient_shape = shape.reconstruct_shape(score = patient.ravel()[:25], atlas = pca, num_scores=25)
     print("PC scores for patient", patient_id, ":", patient.ravel(), flush=True)
     # print(f"Patient {patient_id} shape has {len(patient_shape)} points.", flush=True)
@@ -164,64 +164,65 @@ def deform(outdir, u, geodir, coords, case, patient_id):
 
     # Apply displacement to unloaded coordinates
     unloaded_deformed = unloaded + interpolated_u
-    # Create PolyData
-    point_cloud = pv.PolyData(unloaded_deformed)
+    
+    # # Create PolyData
+    # point_cloud = pv.PolyData(unloaded_deformed)
 
-    # Save as VTP
-    point_cloud.save(f"unloaded_deformed_{case}.vtp")
+    # # Save as VTP
+    # point_cloud.save(f"unloaded_deformed_{case}.vtp")
 
-    print("Saved unloaded.vtp successfully!")
+    # print("Saved unloaded.vtp successfully!")
 
-    # deform both meshes- code to test stl creation from point cloud
-    for label in ["LV", "RV", "RVFW", "EPI", "MV", "AV", "TV", "PV"]:
-        mesh = meshio.read(geodir / f"{label}_unloaded_ED.stl")
-        tree = cKDTree(coords)
-        distances, indices = tree.query(mesh.points, k=4)
-        # Inverse distance weights
-        weights = 1.0 / (distances + 1e-12)
-        weights /= weights.sum(axis=1, keepdims=True)
-        interpolated_u = np.sum(u[indices] * weights[..., np.newaxis], axis=1)
-        tri_cells = None
-        for cell_block in mesh.cells:
-            if cell_block.type == "triangle":
-                tri_cells = cell_block.data
-                break
-        if tri_cells is None:
-            raise RuntimeError(f"No triangles found in {label}_unloaded_ED.stl")
-        cells[label] = tri_cells
+    # # deform both meshes- code to test stl creation from point cloud
+    # for label in ["LV", "RV", "RVFW", "EPI", "MV", "AV", "TV", "PV"]:
+    #     mesh = meshio.read(geodir / f"{label}_unloaded_ED.stl")
+    #     tree = cKDTree(coords)
+    #     distances, indices = tree.query(mesh.points, k=4)
+    #     # Inverse distance weights
+    #     weights = 1.0 / (distances + 1e-12)
+    #     weights /= weights.sum(axis=1, keepdims=True)
+    #     interpolated_u = np.sum(u[indices] * weights[..., np.newaxis], axis=1)
+    #     tri_cells = None
+    #     for cell_block in mesh.cells:
+    #         if cell_block.type == "triangle":
+    #             tri_cells = cell_block.data
+    #             break
+    #     if tri_cells is None:
+    #         raise RuntimeError(f"No triangles found in {label}_unloaded_ED.stl")
+    #     cells[label] = tri_cells
 
-        print(f"Loaded {label} mesh with {len(mesh.points)} points and {len(tri_cells)} triangles.", flush=True)
-        points[label] = mesh.points + interpolated_u
+    #     print(f"Loaded {label} mesh with {len(mesh.points)} points and {len(tri_cells)} triangles.", flush=True)
+    #     points[label] = mesh.points + interpolated_u
         
 
 
-    def get_mesh(faces, points) -> meshio.Mesh:
-        triangle_data_local = faces
+    # def get_mesh(faces, points) -> meshio.Mesh:
+    #     triangle_data_local = faces
 
-        node_indices_that_we_need = np.unique(triangle_data_local)
-        node_data_local = points[node_indices_that_we_need, :]
+    #     node_indices_that_we_need = np.unique(triangle_data_local)
+    #     node_data_local = points[node_indices_that_we_need, :]
 
-        node_id_map_original_to_local = {
-            original: local for local, original in enumerate(node_indices_that_we_need)
-        }
+    #     node_id_map_original_to_local = {
+    #         original: local for local, original in enumerate(node_indices_that_we_need)
+    #     }
 
-        # now apply the mapping to the triangle_data
-        for i in range(triangle_data_local.shape[0]):
-            triangle_data_local[i, 0] = node_id_map_original_to_local[triangle_data_local[i, 0]]
-            triangle_data_local[i, 1] = node_id_map_original_to_local[triangle_data_local[i, 1]]
-            triangle_data_local[i, 2] = node_id_map_original_to_local[triangle_data_local[i, 2]]
+    #     # now apply the mapping to the triangle_data
+    #     for i in range(triangle_data_local.shape[0]):
+    #         triangle_data_local[i, 0] = node_id_map_original_to_local[triangle_data_local[i, 0]]
+    #         triangle_data_local[i, 1] = node_id_map_original_to_local[triangle_data_local[i, 1]]
+    #         triangle_data_local[i, 2] = node_id_map_original_to_local[triangle_data_local[i, 2]]
 
-        # node_indices_that_we_need = np.unique(triangle_data_local)
-        # node_data_local = points[node_indices_that_we_need, :]
+    #     # node_indices_that_we_need = np.unique(triangle_data_local)
+    #     # node_data_local = points[node_indices_that_we_need, :]
 
-        return meshio.Mesh(points=node_data_local, cells=[("triangle", triangle_data_local)])
+    #     return meshio.Mesh(points=node_data_local, cells=[("triangle", triangle_data_local)])
         
-    for label in points:
-        get_mesh(cells[label], points[label]).write(outdir / f"{label}_{case}_deformed.stl")
+    # for label in points:
+    #     get_mesh(cells[label], points[label]).write(outdir / f"{label}_{case}_deformed.stl")
     
     return unloaded_deformed, unloaded
 
-def main(points_ED, points_ES, outdir):
+def main(points_ED, points_ES, undeformed, outdir):
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
 
@@ -245,7 +246,27 @@ def main(points_ED, points_ES, outdir):
     flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
     flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
 
-    return projectedScores[0], flattened, patient_ed, patient_es
+    # def set_path(ukb_path: str):
+    # # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
+    #     if ukb_path is None:
+    #         ukb_path =  "../clones/rk-ukb-atlas/src"
+
+    #     sys.path.insert(0, ukb_path)
+    #     import ukb, cardiac_geometries as cgx
+    #     from ukb import atlas, surface, mesh, clip
+    #     return ukb, atlas, surface, mesh, clip
+
+    # ukb, atlas, surface, mesh, clip = set_path("../clones/rk-ukb-atlas/src")
+    # unwanted_nodes = (5630, 5655, 5696, 5729)
+    # points = shape.Points(
+    #     ED=np.delete(patient_ed, unwanted_nodes, axis=0),
+    #     ES=np.delete(patient_es, unwanted_nodes, axis=0),
+    #     unloaded_ED=np.delete(undeformed, unwanted_nodes, axis=0),
+    # )
+
+    # ukb.surface.main(case="all", folder=outdir, custom_points=points)
+
+    return projectedScores[0], flattened
 
 if __name__ == "__main__":
 
@@ -253,16 +274,17 @@ if __name__ == "__main__":
     # ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
     # ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
     patient_id = 71
+    csv_dir = f"test/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv"
     ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
     ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
     u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
     u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ES")
 
-    points_ED, undeformed = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED", patient_id=patient_id)
-    points_ES, _ = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, coords, case="ES", patient_id=patient_id)
+    points_ED, undeformed = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, csv_dir, coords, case="ED", patient_id=patient_id)
+    points_ES, _ = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, csv_dir, coords, case="ES", patient_id=patient_id)
 
     outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
-    projectedScores, flattened, patient_ed, patient_es = main(points_ED, points_ES, outdir)
+    projectedScores, flattened = main(points_ED, points_ES, undeformed, outdir)
 
     def set_path(ukb_path: str):
     # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
