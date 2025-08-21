@@ -234,7 +234,7 @@ def deform(outdir, u, geodir, coords, case, patient_id):
 
     print("Saved unloaded.vtp successfully!")
 
-    # deform both meshes
+    # deform both meshes- code to test stl creation from point cloud
     for label in ["LV", "RV", "RVFW", "EPI", "MV", "AV", "TV", "PV"]:
         mesh = meshio.read(geodir / f"{label}_unloaded_ED.stl")
         tree = cKDTree(coords)
@@ -281,7 +281,7 @@ def deform(outdir, u, geodir, coords, case, patient_id):
     for label in points:
         get_mesh(cells[label], points[label]).write(outdir / f"{label}_{case}_deformed.stl")
     
-    return unloaded_deformed
+    return unloaded_deformed, unloaded
 
     # combine all points
     # all_points = np.vstack([points[label] for label in points])
@@ -359,51 +359,7 @@ def deform(outdir, u, geodir, coords, case, patient_id):
     # return final_points, final_cells
 
 
-def main(patient_ED, patient_ES, unloaded):
-    print("ED shape:", patient_ED.shape)
-    print("ES shape:", patient_ES.shape)
-    print("Unloaded shape:", unloaded.shape)
-
-    def set_path(ukb_path: str):
-    # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
-        if ukb_path is None:
-            ukb_path =  "../clones/rk-ukb-atlas/src"
-
-        sys.path.insert(0, ukb_path)
-        import ukb, cardiac_geometries as cgx
-        from ukb import atlas, surface, mesh, clip
-        return ukb, atlas, surface, mesh, clip
-
-    def generate_points(patient_ED, patient_ES, unloaded):
-        unwanted_nodes = (5630, 5655, 5696, 5729)
-        points = shape.Points(
-            ED=np.delete(patient_ED, unwanted_nodes, axis=0),
-            ES=np.delete(patient_ES, unwanted_nodes, axis=0),
-            unloaded_ED=np.delete(unloaded, unwanted_nodes, axis=0),
-        )
-        return points
-
-    def generate_surfaces(points):
-        ukb.surface.main(case="both", folder=outdir, custom_points=points)
-
-    ukb, atlas, surface, mesh, clip = set_path("../clones/rk-ukb-atlas/src")
-    points = generate_points(patient_ED, patient_ES, unloaded)
-    print("Points generated for all labels.", flush=True)
-    generate_surfaces(points)
-    print("Surfaces generated for all labels.", flush=True)
-
-if __name__ == "__main__":
-
-    patient_id = 0
-    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
-    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
-    u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
-    u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ES")
-
-    points_ED = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED", patient_id=patient_id)
-    points_ES = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, coords, case="ES", patient_id=patient_id)
-
-    outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
+def main(points_ED, points_ES, outdir):
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
 
@@ -411,11 +367,11 @@ if __name__ == "__main__":
     example_1d_es = points_ES.flatten()
     example_flattened = np.concatenate((example_1d_ed, example_1d_es))
 
-    projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=10)
+    projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=200)
     
     print("Projected scores:", projectedScores[0])
 
-    patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=10)
+    patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=200)
     patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
     patient_es = shape.get_ES_mesh_from_shape(patient_shape)
     vol_ed = volume.find_volume(patient_ed)
@@ -427,7 +383,24 @@ if __name__ == "__main__":
     flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
     flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
 
-    # print(flattened)
+    return projectedScores[0], flattened, patient_ed, patient_es
+
+if __name__ == "__main__":
+
+    # patient_id = 0
+    # ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
+    # ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
+    patient_id = 71
+    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
+    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
+    u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
+    u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ES")
+
+    points_ED, undeformed = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, coords, case="ED", patient_id=patient_id)
+    points_ES, _ = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, coords, case="ES", patient_id=patient_id)
+
+    outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
+    projectedScores, flattened, patient_ed, patient_es = main(points_ED, points_ES, outdir)
 
     def set_path(ukb_path: str):
     # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
@@ -444,7 +417,8 @@ if __name__ == "__main__":
     points = shape.Points(
         ED=np.delete(patient_ed, unwanted_nodes, axis=0),
         ES=np.delete(patient_es, unwanted_nodes, axis=0),
-        unloaded_ED=np.delete(patient_ed, unwanted_nodes, axis=0),
+        unloaded_ED=np.delete(undeformed, unwanted_nodes, axis=0),
     )
 
-    ukb.surface.main(case="both", folder=outdir, custom_points=points)
+    ukb.surface.main(case="all", folder=outdir, custom_points=points)
+
