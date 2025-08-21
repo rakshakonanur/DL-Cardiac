@@ -3,7 +3,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from extract_pca import resample, main
+from extract_pca import resample, deform, main
 
 # Path to dataset
 dataset_path = "../datasets/final"
@@ -26,7 +26,7 @@ for patient_dir in sorted(glob.glob(os.path.join(dataset_path, "patient_*")), ke
         continue
     
     pca_df = pd.read_csv(pca_file[0], header=None)
-    pca_flat = pca_df.values.flatten()[1:11].tolist()  # first 10 elements regardless of shape
+    pca_flat = pca_df.values.flatten()[1:26].tolist()  # first 10 elements regardless of shape
     if len(pca_flat) < 10:
         continue  # skip if not enough PCA values
     
@@ -48,21 +48,24 @@ for patient_dir in sorted(glob.glob(os.path.join(dataset_path, "patient_*")), ke
         
         ES_file = result_file
         ED_file = os.path.join(results_path, f"unloaded_to_ED_PLVED_{lv_ed:.2f}__PRVED_{rv_ed:.2f}__TA_0.0__a_{a_val:.2f}__af_{af_val:.2f}.bp")
-        resample(bpl=ED_file, mode=-1, datadir=Path(f"../datasets/final/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/final/patient_{patient_id}/results-full"), case="ED")
-        resample(bpl=ES_file, mode=-1, datadir=Path(f"../datasets/final/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/final/patient_{patient_id}/results-full"), case="ES")
+        u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"../datasets/final/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/final/patient_{patient_id}/results-full"), case="ED")
+        u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"../datasets/final/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/final/patient_{patient_id}/results-full"), case="ES")
         outdir = Path(f"../datasets/final/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
-        deformed_pca, volume = main(outdir)
+        csv_dir = f"../datasets/final/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv"
+        points_ED, undeformed = deform(Path(f"../datasets/final/patient_{patient_id}/results-full/mode_-1/unloaded_ED"),  u_ED, geodir, csv_dir, coords, case="ED", patient_id=patient_id)
+        points_ES, _ = deform(Path(f"../datasets/final/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, csv_dir, coords, case="ES", patient_id=patient_id)
+        deformed_pca, volume = main(points_ED, points_ES, undeformed,outdir)
         volume_items = [volume[k] for k in sorted(volume.keys())]  # sorted keeps it consistent
 
         row = [patient_name] + pca_flat + [lv_ed, lv_es, rv_ed, rv_es, a_val, af_val] + deformed_pca.tolist() + volume_items
         rows.append(row)
 
-    columns = (["Patient"] + [f"PCA{i+1}" for i in range(10)] + 
+    columns = (["Patient"] + [f"PCA{i+1}" for i in range(25)] + 
                ["LV_ED", "LV_ES", "RV_ED", "RV_ES", "a", "a_f"] + 
-               [f"defPCA{i+1}" for i in range(10)] + sorted(volume.keys()))  # column names match the order of values
+               [f"defPCA{i+1}" for i in range(200)] + sorted(volume.keys()))  # column names match the order of values
 
     df = pd.DataFrame(rows, columns=columns)
-    output_file = "aggregated_results.csv"
+    output_file = "aggregated_results_0821.csv"
 
     # Append mode, but write header only if file doesn't exist or is empty
     df.to_csv(
