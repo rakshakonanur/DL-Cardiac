@@ -55,74 +55,12 @@ surfaces = {
 }
 """
 
-def procrustes(X,Y,scaling=True,reflection='best'):
-    
-    """
-    Procrustes analysis determines a linear transformation (translation,
-    reflection, orthogonal rotation and scaling) of the points in Y to best
-    conform them to the points in matrix X, using the sum of squared errors
-    as the goodness of fit criterion.
-    d, Z, [tform] = procrustes(X, Y)
-
-    Parameters
-    ----------
-    X : MEAN shape (n, m)
-    Y : PATIENT shape (n, m)
-
-    """
-    n,m = X.shape # n = number of points, m = dimension
-    ny,my = Y.shape # ny = number of points, my = dimension
-    muX = X.mean(0) # compute the mean of X along each dimension
-    muY = Y.mean(0) # compute the mean of Y along each dimension
-    X0 = X - muX # center the data around the origin by subtracting the mean
-    Y0 = Y - muY # center the data around the origin by subtracting the mean
-    ssX = (X0**2.).sum() # finds the total variance (sum of squares) in X
-    ssY = (Y0**2.).sum() # finds the total variance (sum of squares) in Y
-    normX = np.sqrt(ssX) # Euclidean norm of X
-    normY = np.sqrt(ssY) # Euclidean norm of Y
-    X0 /= normX # normalize X0 by dividing by its norm (makes it scale invariant)
-    Y0 /= normY # normalize Y0 by dividing by its norm (makes it scale invariant)
-    if my < m: # if Y has fewer dimensions than X, pad Y0 with zeros
-        Y0 = np.concatenate((Y0,np.zeros(n, m-my)),0)
-    A = np.dot(X0.T,Y0) # compute the covariance matrix between centered, normalized shapes
-    U,s,Vt = np.linalg.svd(A,full_matrices=True)
-    V = Vt.T
-    T = np.dot(V,U.T) # compute the optimal rotation using singular value decomposition
-    if reflection != 'best': # if reflection is false, ensures that the transformation is not a rotation
-        have_reflection = np.linalg.det(T) < 0
-        if reflection != have_reflection:
-            V[:,-1] *= -1
-            s[-1] *= -1
-            T = np.dot(V,U.T)
-    traceTA = s.sum() # sum of singular values = how well the aligned shapes are
-    if scaling:
-        b = traceTA*normX/normY # compute the scaling factor
-        d = 1-traceTA**2 # computes dissimilarity (how different the shapes are)
-        Z = normX*traceTA*np.dot(Y0,T)+muX # reconstructs the aligned shape Z
-    else:
-        b = 1
-        d = 1+ssY/ssX-2*traceTA*normY/normX
-        Z = normY*np.dot(Y0,T)+muX
-    if my<m:
-        T = T[:my,:] # truncates if it was padded earlier
-    c = muX-b*np.dot(muY,T) # compute the translation vector
-    # Transformation values 
-    tform = {'rotation':T,'scale':b,'translation':c}
-    print(f"Procrustes analysis: d={d:.4f}, scale={b:.4f}, translation={c}")
-    #return d, Z, tform
-    return T, c
-
 def project_patient_to_atlas(patient_shape_flat, atlas, numModes = 10):
 
     MU = np.transpose(atlas["MU"]) # mean shape
     COEFF = np.transpose(atlas["COEFF"]) # PCA eigenvectors (basis)
     LATENT = np.transpose(atlas["LATENT"]) # PCA eigenvalues (variances)
     patient3D = patient_shape_flat.reshape(-1, 3)
-    mean3D = np.array(np.transpose(MU)).reshape(-1, 3)
-
-    # Procrustes alignment
-    # T, c = procrustes(mean3D, patient3D, scaling=True, reflection='best')
-    # patient3Daligned = np.dot(patient3D, T) + c # rotates and translates the patient shape to align with the mean shape
     patient1Daligned = patient3D.flatten()
 
     patient1Dnormalized = patient1Daligned - np.transpose(MU) # center the patient shape for PCA projection
@@ -282,82 +220,6 @@ def deform(outdir, u, geodir, coords, case, patient_id):
         get_mesh(cells[label], points[label]).write(outdir / f"{label}_{case}_deformed.stl")
     
     return unloaded_deformed, unloaded
-
-    # combine all points
-    # all_points = np.vstack([points[label] for label in points])
-    # all_cells = np.vstack([cells[label] + sum(len(cells[l]) for l in points if l < label) for label in points])
-    # Example input: points and cells dictionaries
-    # points = {'label1': np.array(...), 'label2': np.array(...)}
-    # cells  = {'label1': np.array(...), 'label2': np.array(...))}
-
-    # all_points = []
-    # all_cells = []
-    # label_ranges = {}  # store start/end index for each label
-
-    # print("\n--- Mesh summary per label ---")
-    # offset = 0
-    # for label in ["LV", "RV", "EPI", "MV", "AV", "TV", "PV", "RVFW"]:
-    #     verts = points[label]
-    #     tris  = cells[label]
-
-    #     start = offset
-    #     end   = offset + len(verts)
-    #     label_ranges[label] = (start, end)
-
-    #     print(f"{label}: {len(verts)} points, {len(tris)} triangles, offset={offset}")
-
-    #     all_points.append(verts)
-    #     all_cells.append(tris + offset)
-    #     offset += len(verts)
-
-    # all_points = np.vstack(all_points)
-    # all_cells  = np.vstack(all_cells)
-
-    # print("\n--- Combined mesh summary (before deduplication) ---")
-    # print(f"Total points: {len(all_points)}")
-    # print(f"Total triangles: {len(all_cells)}")
-    # print(f"Max cell index: {all_cells.max()}")
-
-    # # Deduplicate while ensuring total points >= 5810
-    # target_min = 5810
-    # seen = {}
-    # unique_points_list = []
-    # inverse = np.zeros(len(all_points), dtype=int)
-    # removed_count = 0
-
-    # for i, pt in enumerate(all_points):
-    #     key = tuple(pt)
-    #     if key in seen:
-    #         if (len(all_points) - removed_count) > target_min:
-    #             inverse[i] = seen[key]
-    #             removed_count += 1
-    #         else:
-    #             inverse[i] = len(unique_points_list)
-    #             seen[key] = inverse[i]
-    #             unique_points_list.append(pt)
-    #     else:
-    #         inverse[i] = len(unique_points_list)
-    #         seen[key] = inverse[i]
-    #         unique_points_list.append(pt)
-
-    # final_points = np.vstack(unique_points_list)
-    # final_cells  = inverse[all_cells]
-
-    # print("\n--- After deduplication (ensuring >= 5810 points) ---")
-    # print(f"Total points: {len(final_points)}")
-    # print(f"Removed duplicates (global): {removed_count}")
-    # print(f"Max cell index (remapped): {final_cells.max()}")
-
-    # print("\n--- Per-label point reduction (accurate) ---")
-    # for label, (start, end) in label_ranges.items():
-    #     orig_count = end - start
-    #     # count how many points in this label were mapped to an existing point (i.e., removed)
-    #     removed_in_label = sum(inverse[start:end] != np.arange(start, end))
-    #     print(f"{label}: {orig_count} → {orig_count - removed_in_label} (reduced {removed_in_label})")
-
-
-    # return final_points, final_cells
-
 
 def main(points_ED, points_ES, outdir):
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
