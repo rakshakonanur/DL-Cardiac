@@ -285,24 +285,3 @@ if __name__ == "__main__":
 
     outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
     projectedScores, flattened = main(points_ED, points_ES, undeformed, outdir)
-
-    def set_path(ukb_path: str):
-    # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
-        if ukb_path is None:
-            ukb_path =  "../clones/rk-ukb-atlas/src"
-
-        sys.path.insert(0, ukb_path)
-        import ukb, cardiac_geometries as cgx
-        from ukb import atlas, surface, mesh, clip
-        return ukb, atlas, surface, mesh, clip
-
-    ukb, atlas, surface, mesh, clip = set_path("../clones/rk-ukb-atlas/src")
-    unwanted_nodes = (5630, 5655, 5696, 5729)
-    points = shape.Points(
-        ED=np.delete(patient_ed, unwanted_nodes, axis=0),
-        ES=np.delete(patient_es, unwanted_nodes, axis=0),
-        unloaded_ED=np.delete(undeformed, unwanted_nodes, axis=0),
-    )
-
-    ukb.surface.main(case="all", folder=outdir, custom_points=points)
-
