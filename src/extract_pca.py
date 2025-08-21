@@ -54,6 +54,55 @@ surfaces = {
     "PV": Surface("PV", [(5694, 5729)], [(6752, 11616)]),
 }
 """
+def procrustes(X,Y,scaling=True,reflection='best'):
+
+    """
+    Procrustes analysis determines a linear transformation (translation,
+    reflection, orthogonal rotation and scaling) of the points in Y to best
+    conform them to the points in matrix X, using the sum of squared errors
+    as the goodness of fit criterion.
+    d, Z, [tform] = procrustes(X, Y)
+    """
+    n,m = X.shape
+    ny,my = Y.shape    
+    muX = X.mean(0)
+    muY = Y.mean(0)    
+    X0 = X - muX
+    Y0 = Y - muY    
+    ssX = (X0**2.).sum()
+    ssY = (Y0**2.).sum()
+    normX = np.sqrt(ssX)
+    normY = np.sqrt(ssY)
+    X0 /= normX
+    Y0 /= normY
+    if my < m:
+        Y0 = np.concatenate((Y0,np.zeros(n, m-my)),0)
+    A = np.dot(X0.T,Y0)
+    U,s,Vt = np.linalg.svd(A,full_matrices=True)
+    V = Vt.T
+    T = np.dot(V,U.T)
+    if reflection != 'best':
+        have_reflection = np.linalg.det(T) < 0
+        if reflection != have_reflection:
+            V[:,-1] *= -1
+            s[-1] *= -1
+            T = np.dot(V,U.T)
+    traceTA = s.sum()
+    if scaling:
+        b = traceTA*normX/normY
+        d = 1-traceTA**2
+        Z = normX*traceTA*np.dot(Y0,T)+muX
+    else:
+        b = 1
+        d = 1+ssY/ssX-2*traceTA*normY/normX
+        Z = normY*np.dot(Y0,T)+muX
+    if my<m:
+        T = T[:my,:]
+    c = muX-b*np.dot(muY,T)
+    # Transformation values 
+    tform = {'rotation':T,'scale':b,'translation':c}
+    #return d, Z, tform
+    return T, c
 
 def project_patient_to_atlas(patient_shape_flat, atlas, numModes = 10):
 
@@ -234,18 +283,19 @@ def main(points_ED, points_ES, undeformed, outdir):
     
     print("Projected scores:", projectedScores[0])
 
-    patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=200)
-    patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
-    patient_es = shape.get_ES_mesh_from_shape(patient_shape)
-    vol_ed = volume.find_volume(patient_ed)
+    vol_ed = volume.find_volume(points_ED)
     print("ED Volume:", vol_ed)
-    vol_es = volume.find_volume(patient_es)
+    vol_es = volume.find_volume(points_ES)
     print("ES Volume:", vol_es)
 
     # Flatten into one dict
     flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
     flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
 
+    # patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=200)
+    # patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
+    # patient_es = shape.get_ES_mesh_from_shape(patient_shape)
+    
     # def set_path(ukb_path: str):
     # # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
     #     if ukb_path is None:
