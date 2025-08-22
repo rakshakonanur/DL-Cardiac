@@ -1,0 +1,60 @@
+name: Test package
+
+# on:
+#   pull_request:
+#   push:
+#     branches: [main]
+on: [push]
+
+jobs:
+  test-code:
+    name: Test installation
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone repos
+        run: |
+          mkdir clones
+          git clone --single-branch --branch main https://github.com/rakshakonanur/rk-sscp25-deep-learning-cardiac-mechanics.git clones/rk-sscp25
+          git clone --single-branch --branch main https://github.com/annaqi13/sscp25.git clones/sscp25
+          cd clones/sscp25 && git checkout e216f9268033ebd05afb8dda06d7b83f86a67fd7 && cd ../..
+          git clone --single-branch --branch v1.1.5 https://github.com/UOA-Heart-Mechanics-Research/biv-me.git clones/biv-me
+          git clone --single-branch --branch main https://github.com/rakshakonanur/rk-ukb-atlas.git clones/rk-ukb-atlas
+          git clone --single-branch --branch main https://github.com/rakshakonanur/fenicsx-pulse.git clones/fenicsx-pulse
+
+
+      - name: Download atlas and cohort data
+        run: |
+          mkdir refs
+          curl -L "https://drive.usercontent.google.com/download?id=1nGlaEU_l6eJrSsk2DGX7Uqq0DgcDJU31&confirm=xxx" -o refs/BioBank_EDES_200.mat
+          cp clones/sscp25/Data/virtual_cohort_data.xlsx refs/virtual_cohort_data.xlsx
+
+      - name: Cache conda
+        uses: actions/cache@v3
+        env:
+          # Increase this value to reset cache if environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-py-${{ matrix.python-version }}${{
+            hashFiles('clones/rk-sscp25/environment.yml') }}
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          auto-update-conda: false
+          channels: conda-forge
+          activate-environment: sscp25-deep-learning-cardiac-mechanics
+          environment-file: clones/rk-sscp25/environment.yml
+
+      - name: Install additional requirements
+        shell: bash -el {0}
+        run: conda install openpyxl -y
+
+      - name: Test sample.py
+        shell: bash -el {0}
+        run: |
+          cd src && python3 sample.py
