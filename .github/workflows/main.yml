@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir refs
           curl -L "https://drive.usercontent.google.com/download?id=1nGlaEU_l6eJrSsk2DGX7Uqq0DgcDJU31&confirm=xxx" -o refs/BioBank_EDES_200.mat
-
+          cp clones/sscp25/Data/virtual_cohort_data.xlsx refs/virtual_cohort_data.xlsx
 
       - name: Cache conda
         uses: actions/cache@v3
