@@ -20,7 +20,7 @@ jobs:
           git clone --single-branch --branch main https://github.com/rakshakonanur/rk-sscp25-deep-learning-cardiac-mechanics.git clones/rk-sscp25
           git clone --single-branch --branch main https://github.com/annaqi13/sscp25.git clones/sscp25
           cd clones/sscp25 && git checkout e216f9268033ebd05afb8dda06d7b83f86a67fd7 && cd ../..
-          git clone --single-branch --branch main https://github.com/UOA-Heart-Mechanics-Research/biv-me.git@v1.1.5 clones/biv-me
+          git clone --single-branch --branch v1.1.5 https://github.com/UOA-Heart-Mechanics-Research/biv-me.git clones/biv-me
           git clone --single-branch --branch main https://github.com/rakshakonanur/rk-ukb-atlas.git clones/rk-ukb-atlas
           git clone --single-branch --branch main https://github.com/rakshakonanur/fenicsx-pulse.git clones/fenicsx-pulse
 
