@@ -51,8 +51,8 @@ jobs:
           environment-file: clones/rk-sscp25/environment.yml
 
       - name: Install additional requirements
-        run: |
-          python3 -m pip install openpyxl
+        shell: bash -el {0}
+        run: conda install openpyxl -y
 
       - name: Test sample.py
         shell: bash -el {0}
