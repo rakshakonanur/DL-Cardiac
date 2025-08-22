@@ -50,10 +50,11 @@ jobs:
           activate-environment: sscp25-deep-learning-cardiac-mechanics
           environment-file: clones/rk-sscp25/environment.yml
 
-      - name: Install requirements
-        run: |
-          python3 -m pip install pandas
+      # - name: Install requirements
+      #   run: |
+      #     python3 -m pip install pandas
 
       - name: Test sample.py
+        shell: bash -el {0}
         run: |
           cd src && python3 sample.py
