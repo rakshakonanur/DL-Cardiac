@@ -8,8 +8,7 @@ import scipy.io
 
 mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
 pca = mat_data['pca200'][0, 0]
-score =[0.25885691, 0.01645, -0.32231254, 0.20249553, 0.12602418, 0.14317364,
- -0.13063409, 0.54752804, 0.20553535, -0.005437]
+score =[1.699781624, 0.6334225628, -0.9943332855, -0.4799184724, 0.7173195775, 1.452603454, -0.488874658, 1.039413574, 1.314017295, -0.07953502141, -0.09158254309, -0.829926654, 0.2845153771, -2.116230972, -2.450380377, -0.7292193965, -1.950670665, -0.1086362837, -0.6646924126, -0.50757885, -0.2505143608, 1.587090814, -1.204133202, 0.4817391909, -1.081587619]
 
 # Predicted values: [-0.14505391, -0.12284824, -0.27698756,  0.0537183,  -0.09379592, -0.29158689,
 #  -0.13056078,  0.42569234,  0.07263599,  0.75241125]
@@ -18,7 +17,7 @@ score =[0.25885691, 0.01645, -0.32231254, 0.20249553, 0.12602418, 0.14317364,
 # Visualizing Sample 8:
 
 
-patient_shape = shape.reconstruct_shape(score = score, atlas = pca, num_scores=10)
+patient_shape = shape.reconstruct_shape(score = score, atlas = pca, num_scores=25)
 patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
 patient_es = shape.get_ES_mesh_from_shape(patient_shape)
 vol_ed = volume.find_volume(patient_ed)
