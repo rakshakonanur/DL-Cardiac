@@ -55,52 +55,59 @@ surfaces = {
 }
 """
 def procrustes(X,Y,scaling=True,reflection='best'):
-
+    
     """
     Procrustes analysis determines a linear transformation (translation,
     reflection, orthogonal rotation and scaling) of the points in Y to best
     conform them to the points in matrix X, using the sum of squared errors
     as the goodness of fit criterion.
     d, Z, [tform] = procrustes(X, Y)
+
+    Parameters
+    ----------
+    X : MEAN shape (n, m)
+    Y : PATIENT shape (n, m)
+
     """
-    n,m = X.shape
-    ny,my = Y.shape    
-    muX = X.mean(0)
-    muY = Y.mean(0)    
-    X0 = X - muX
-    Y0 = Y - muY    
-    ssX = (X0**2.).sum()
-    ssY = (Y0**2.).sum()
-    normX = np.sqrt(ssX)
-    normY = np.sqrt(ssY)
-    X0 /= normX
-    Y0 /= normY
-    if my < m:
+    n,m = X.shape # n = number of points, m = dimension
+    ny,my = Y.shape # ny = number of points, my = dimension
+    muX = X.mean(0) # compute the mean of X along each dimension
+    muY = Y.mean(0) # compute the mean of Y along each dimension
+    X0 = X - muX # center the data around the origin by subtracting the mean
+    Y0 = Y - muY # center the data around the origin by subtracting the mean
+    ssX = (X0**2.).sum() # finds the total variance (sum of squares) in X
+    ssY = (Y0**2.).sum() # finds the total variance (sum of squares) in Y
+    normX = np.sqrt(ssX) # Euclidean norm of X
+    normY = np.sqrt(ssY) # Euclidean norm of Y
+    X0 /= normX # normalize X0 by dividing by its norm (makes it scale invariant)
+    Y0 /= normY # normalize Y0 by dividing by its norm (makes it scale invariant)
+    if my < m: # if Y has fewer dimensions than X, pad Y0 with zeros
         Y0 = np.concatenate((Y0,np.zeros(n, m-my)),0)
-    A = np.dot(X0.T,Y0)
+    A = np.dot(X0.T,Y0) # compute the covariance matrix between centered, normalized shapes
     U,s,Vt = np.linalg.svd(A,full_matrices=True)
     V = Vt.T
-    T = np.dot(V,U.T)
-    if reflection != 'best':
+    T = np.dot(V,U.T) # compute the optimal rotation using singular value decomposition
+    if reflection != 'best': # if reflection is false, ensures that the transformation is not a rotation
         have_reflection = np.linalg.det(T) < 0
         if reflection != have_reflection:
             V[:,-1] *= -1
             s[-1] *= -1
             T = np.dot(V,U.T)
-    traceTA = s.sum()
+    traceTA = s.sum() # sum of singular values = how well the aligned shapes are
     if scaling:
-        b = traceTA*normX/normY
-        d = 1-traceTA**2
-        Z = normX*traceTA*np.dot(Y0,T)+muX
+        b = traceTA*normX/normY # compute the scaling factor
+        d = 1-traceTA**2 # computes dissimilarity (how different the shapes are)
+        Z = normX*traceTA*np.dot(Y0,T)+muX # reconstructs the aligned shape Z
     else:
         b = 1
         d = 1+ssY/ssX-2*traceTA*normY/normX
         Z = normY*np.dot(Y0,T)+muX
     if my<m:
-        T = T[:my,:]
-    c = muX-b*np.dot(muY,T)
+        T = T[:my,:] # truncates if it was padded earlier
+    c = muX-b*np.dot(muY,T) # compute the translation vector
     # Transformation values 
     tform = {'rotation':T,'scale':b,'translation':c}
+    print(f"Procrustes analysis: d={d:.4f}, scale={b:.4f}, translation={c}")
     #return d, Z, tform
     return T, c
 
@@ -110,12 +117,17 @@ def project_patient_to_atlas(patient_shape_flat, atlas, numModes = 10):
     COEFF = np.transpose(atlas["COEFF"]) # PCA eigenvectors (basis)
     LATENT = np.transpose(atlas["LATENT"]) # PCA eigenvalues (variances)
     patient3D = patient_shape_flat.reshape(-1, 3)
+    mean3D = np.array(np.transpose(MU)).reshape(-1, 3)
+
+    # Procrustes alignment
+    T, c = procrustes(mean3D, patient3D, scaling=True, reflection='best')
+    patient3Daligned = np.dot(patient3D, T) + c # rotates and translates the patient shape to align with the mean shape
     patient1Daligned = patient3D.flatten()
 
     patient1Dnormalized = patient1Daligned - np.transpose(MU) # center the patient shape for PCA projection
     projectedScores = np.dot(patient1Dnormalized, np.transpose(COEFF[0:numModes,:])) / np.sqrt(np.array(np.transpose(LATENT[0,0:numModes]))) 
     # project the patient shape onto the PCA basis by taking the dot product with the first numModes eigenvectors and normalizing by the square root of the eigenvalues
-    return projectedScores
+    return projectedScores, patient3Daligned
 
 def resample(
     mode: int = -1,
@@ -279,13 +291,30 @@ def main(points_ED, points_ES, undeformed, outdir):
     example_1d_es = points_ES.flatten()
     example_flattened = np.concatenate((example_1d_ed, example_1d_es))
 
-    projectedScores = project_patient_to_atlas(example_flattened, pca, numModes=200)
+    projectedScores, patientRealigned = project_patient_to_atlas(example_flattened, pca, numModes=200)
     
     print("Projected scores:", projectedScores[0])
 
+    # patient_ed = shape.get_ED_mesh_from_shape(points_ED)
+    # patient_es = shape.get_ES_mesh_from_shape(points_ES)
+    vol_undeformed = volume.find_volume(undeformed)
+    print("Unloaded Volume:", vol_undeformed)
     vol_ed = volume.find_volume(points_ED)
     print("ED Volume:", vol_ed)
     vol_es = volume.find_volume(points_ES)
+    print("ES Volume:", vol_es)
+
+    # # Flatten into one dict
+    # flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
+    # flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
+
+    patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=200)
+    patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
+    patient_es = shape.get_ES_mesh_from_shape(patient_shape)
+    
+    vol_ed = volume.find_volume(patient_ed)
+    print("ED Volume:", vol_ed)
+    vol_es = volume.find_volume(patient_es)
     print("ES Volume:", vol_es)
 
     # Flatten into one dict
@@ -320,10 +349,14 @@ def main(points_ED, points_ES, undeformed, outdir):
 
 if __name__ == "__main__":
 
-    # patient_id = 0
-    # ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
-    # ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
-    patient_id = 71
+    patient_id = 0
+    ED_file = f"/Users/rakshakonanur/Downloads/displacement_2.bp"
+    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
+   
+    # patient_id = 71
+    # ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
+    # ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
+    
     csv_dir = f"test/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv"
     ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
     ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
