@@ -3,6 +3,11 @@ from pathlib import Path
 import numpy as np
 import collections.abc
 
+def parse_array(s):
+    # Accepts strings like "[1.0, 2.0]" or "1.0,2.0"
+    s = s.strip("[]")
+    return np.array([float(x) for x in s.split(",")])
+
 def parse_array_return_float(s):
     # Accepts "[1.0, 2.0]", "1.0,2.0" or just "1.0"
     s = s.strip("[]")
@@ -48,17 +53,21 @@ class Simulation:
         self.results_dir.mkdir(parents=True, exist_ok=True)
         self.solver_path = solver_path
 
-    def run(self, max_retries: int = 3):
+    def run(self, max_retries: int = 5):
         for case in self.cases:
             sys.path.append(self.solver_path)
             if self.single_case:
                 import run_simulation_single as run_simulation
+                current_N = self.N[0]
+                self.PLV = self.PLV[0]
+                self.PRV = self.PRV[0]
+                self.Ta = self.Ta[0]
             else:
                 import run_simulation_full as run_simulation
+                current_N = self.N
                 # Import the full simulation module only if not in single case mode
 
             retries = 0
-            current_N = self.N
 
             while retries <= max_retries:
                 try:
@@ -83,7 +92,10 @@ class Simulation:
                     # Check if error is convergence-related
                     if "convergence" in str(e).lower() or "did not converge" in str(e).lower():
                         print(f"⚠️ Solver failed to converge with N = {current_N}. Retrying with N = {2 * current_N}...")
-                        current_N =[current_N[0] * 2, current_N[1]]
+                        if self.single_case:
+                            current_N = current_N *2
+                        else:
+                            current_N =[current_N[0] * 2, current_N[1]]
                         retries += 1
                     else:
                         # Some other error; re-raise
@@ -104,11 +116,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run cardiac mechanics simulation.")
     parser.add_argument("--case", type=str, default="unloaded_ED", help="Simulation case")
     parser.add_argument("--single_case", default=False, help="Run a single case - not for generating training data")
-    parser.add_argument("--PLV", type=parse_array_return_float, default=[20.0, 30.0], help="Left ventricular pressure")
-    parser.add_argument("--PRV", type=parse_array_return_float, default=[4.0, 8.0], help="Right ventricular pressure")
-    parser.add_argument("--Ta", type=parse_array_return_float, default=[0.0, 120.0], help="Active stress time constant")
+    parser.add_argument("--PLV", type=parse_array, default=[20.0, 30.0], help="Left ventricular pressure")
+    parser.add_argument("--PRV", type=parse_array, default=[4.0, 8.0], help="Right ventricular pressure")
+    parser.add_argument("--Ta", type=parse_array, default=[0.0, 120.0], help="Active stress time constant")
     parser.add_argument("--eta", type=float, default=0.3, help="Active stress scaling factor")
-    parser.add_argument("--N", type=parse_array_return_int, default=[100, 150], help="Number of time steps for simulation")
+    parser.add_argument("--N", type=np.array, default=[2000, 250], help="Number of time steps for simulation")
     parser.add_argument("--a", type=float, default=2.280, help="Material parameter a")
     parser.add_argument("--a_f", type=float, default=1.685, help="Material parameter a_f")
     parser.add_argument("--mode", type=int, default=-1, help="Simulation mode")

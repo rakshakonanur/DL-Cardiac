@@ -65,7 +65,7 @@ for patient_dir in sorted(glob.glob(os.path.join(dataset_path, "patient_*")), ke
                [f"defPCA{i+1}" for i in range(200)] + sorted(volume.keys()))  # column names match the order of values
 
     df = pd.DataFrame(rows, columns=columns)
-    output_file = "aggregated_results_0821.csv"
+    output_file = "aggregated_results_0821_2.csv"
 
     # Append mode, but write header only if file doesn't exist or is empty
     df.to_csv(
