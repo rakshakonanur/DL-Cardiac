@@ -226,13 +226,13 @@ def deform(outdir, u, geodir, csv_dir, coords, case, patient_id):
     # Apply displacement to unloaded coordinates
     unloaded_deformed = unloaded + interpolated_u
     
-    # # Create PolyData
-    # point_cloud = pv.PolyData(unloaded_deformed)
+    # Create PolyData
+    point_cloud = pv.PolyData(unloaded_deformed)
 
-    # # Save as VTP
-    # point_cloud.save(f"unloaded_deformed_{case}.vtp")
+    # Save as VTP
+    point_cloud.save(f"unloaded_deformed_{case}.vtp")
 
-    # print("Saved unloaded.vtp successfully!")
+    print("Saved unloaded.vtp successfully!")
 
     # # deform both meshes- code to test stl creation from point cloud
     # for label in ["LV", "RV", "RVFW", "EPI", "MV", "AV", "TV", "PV"]:
@@ -312,19 +312,15 @@ def main(points_ED, points_ES, undeformed, outdir):
     patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
     patient_es = shape.get_ES_mesh_from_shape(patient_shape)
     
-    vol_ed = volume.find_volume(patient_ed)
-    print("ED Volume:", vol_ed)
-    vol_es = volume.find_volume(patient_es)
-    print("ES Volume:", vol_es)
+    proj_vol_ed = volume.find_volume(patient_ed)
+    print("ED Volume:", proj_vol_ed)
+    proj_vol_es = volume.find_volume(patient_es)
+    print("ES Volume:", proj_vol_es)
 
     # Flatten into one dict
     flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
     flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
 
-    # patient_shape = shape.reconstruct_shape(score = projectedScores, atlas = pca, num_scores=200)
-    # patient_ed = shape.get_ED_mesh_from_shape(patient_shape)
-    # patient_es = shape.get_ES_mesh_from_shape(patient_shape)
-    
     # def set_path(ukb_path: str):
     # # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
     #     if ukb_path is None:
@@ -350,21 +346,21 @@ def main(points_ED, points_ES, undeformed, outdir):
 if __name__ == "__main__":
 
     patient_id = 0
-    ED_file = f"/Users/rakshakonanur/Downloads/displacement_2.bp"
-    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_20.00__PRVED_4.00__PLVES_30.0000__PRVES_8.0000__TA_120.0__a_2.28__af_1.69.bp"
+    ED_file = f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_1.20__PRVED_0.53__TA_0.0__eta_0.2__a_1.28__af_1.69.bp"
+    ES_file = f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_1.20__PRVED_0.53__PLVES_18.0000__PRVES_3.0000__TA_200.0__eta_0.2__a_1.28__af_1.69.bp"
    
     # patient_id = 71
     # ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
     # ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
     
-    csv_dir = f"test/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv"
-    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
-    ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
-    u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
-    u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ES")
+    csv_dir = f"../datasets/updated_final/1/patient_{patient_id}/unloaded_pc_scores_patient_{patient_id}.csv"
+    # ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_10.00__PRVED_4.00__TA_0.0__a_3.28__af_30.00.bp"
+    # ES_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/PLVED_10.00__PRVED_4.00__PLVES_16.0000__PRVES_8.0000__TA_120.0__a_3.28__af_30.00.bp"
+    u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"../datasets/updated_final/1/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/updated_final/1/patient_{patient_id}/results-full"), case="ED")
+    u_ES, coords, geodir = resample(bpl=ES_file, mode=-1, datadir=Path(f"../datasets/updated_final/1/patient_{patient_id}/data-full"), resultsdir=Path(f"../datasets/updated_final/1/patient_{patient_id}/results-full"), case="ES")
 
-    points_ED, undeformed = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, csv_dir, coords, case="ED", patient_id=patient_id)
-    points_ES, _ = deform(Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, csv_dir, coords, case="ES", patient_id=patient_id)
+    points_ED, undeformed = deform(Path(f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ED, geodir, csv_dir, coords, case="ED", patient_id=patient_id)
+    points_ES, _ = deform(Path(f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED"), u_ES, geodir, csv_dir, coords, case="ES", patient_id=patient_id)
 
-    outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
+    outdir = Path(f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
     projectedScores, flattened = main(points_ED, points_ES, undeformed, outdir)
