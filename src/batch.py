@@ -7,35 +7,22 @@ import numpy as np
 import time
 
 # Define the parameter values
-PLV_ED_vals = [5, 10, 20]
-# PLV_ES_vals = [5.5, 16, 30]
-PRV_ED_vals = [1, 1.5, 4]
-# PRV_ES_vals = [1.5, 2.67, 8]
-# a_vals = [0.1, 0.25, 2.0]
-# a_f_vals = [1, 20, 30]
+PLV_ED_vals = [0.8, 1.2, 1.6]
+PRV_ED_vals = [x / 2.25 for x in PLV_ED_vals]
+print("PLV ED: ", PLV_ED_vals)
+print("PRV ED: ", PRV_ED_vals)
 
 PLV_ED = 20
-PLV_ES = 30
+PLV_ES = 25
 PRV_ED = 4
-PRV_ES = 8
+PRV_ES = 4
 
 a = 2.280
 a_f = 1.685
-x = 1
-n_max = 1  # number of steps in each direction (positive and negative)
-
-def generate_sorted_array(center, x, n_max):
-    result = [center]
-    for n in range(1, n_max + 1):
-        result.append(center + n * x)
-        result.append(center - n * x)
-    return result
 
 # a_array = [generate_sorted_array(a, x, n_max)]
-a_array = [a, a+1]
-a_f_array = [1.685, 20, 30]
-# a_array = a_array[2:]
-# a_f_array = a_f_array[1:]
+a_array = [0.5, a-1]
+a_f_array = [1.69, 10, 20]
 
 print("a_array:", a_array)
 print("a_f_array:", a_f_array)
@@ -44,11 +31,17 @@ print("a_f_array:", a_f_array)
 num_patients = 10  # or any number you want
 
 # Generate all combinations of parameters
-param_combinations = list(itertools.product(a_array, a_f_array, PLV_ED_vals, PRV_ED_vals))
+# param_combinations = list(itertools.product(a_array, a_f_array, PLV_ED_vals, PRV_ED_vals))
+param_combinations = [
+    (a, af, plv, prv)
+    for a, af in itertools.product(a_array, a_f_array)
+    for plv, prv in zip(PLV_ED_vals, PRV_ED_vals)
+    # if not (a == 0.50 and af == 1.68)
+]
 
 count = 0
-start_patient = 110
-end_patient = 112
+start_patient = 600
+end_patient = 800
 
 # Stores the number of retries for meshing
 max_retries = 2
@@ -95,7 +88,7 @@ for patient_id in range(start_patient, end_patient):
         try:
             # Command to run simulation.py with parameters
             cmd = [
-                "mpirun", "-n", "16",
+                "mpirun", "-n", "32",
                 "python", "simulation.py",
                 "--patient_id", str(patient_id),
                 "--PLV", str(plv),
