@@ -27,7 +27,7 @@ class Simulation:
                  data_dir: str = f"patient_0/data-full/", 
                  solver_path: str = "../clones/rk-sscp25-deep-learning-cardiac-mechanics",
                  PLV=None, PRV=None, Ta=None, N=None,
-                 eta: float = 0.3,
+                 eta: float = 0.2,
                  a: float = 2.280,
                  a_f: float = 1.685):
 
@@ -116,12 +116,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run cardiac mechanics simulation.")
     parser.add_argument("--case", type=str, default="unloaded_ED", help="Simulation case")
     parser.add_argument("--single_case", default=False, help="Run a single case - not for generating training data")
-    parser.add_argument("--PLV", type=parse_array, default=[20.0, 30.0], help="Left ventricular pressure")
-    parser.add_argument("--PRV", type=parse_array, default=[4.0, 8.0], help="Right ventricular pressure")
-    parser.add_argument("--Ta", type=parse_array, default=[0.0, 120.0], help="Active stress time constant")
-    parser.add_argument("--eta", type=float, default=0.3, help="Active stress scaling factor")
-    parser.add_argument("--N", type=np.array, default=[2000, 250], help="Number of time steps for simulation")
-    parser.add_argument("--a", type=float, default=2.280, help="Material parameter a")
+    parser.add_argument("--PLV", type=parse_array, default=[0.8, 25.0], help="Left ventricular pressure")
+    parser.add_argument("--PRV", type=parse_array, default=[0.8/2.25, 4.0], help="Right ventricular pressure")
+    parser.add_argument("--Ta", type=parse_array, default=[0.0, 200.0], help="Active stress time constant")
+    parser.add_argument("--eta", type=float, default=0.2, help="Active stress scaling factor")
+    parser.add_argument("--N", type=np.array, default=[200, 1600], help="Number of time steps for simulation")
+    parser.add_argument("--a", type=float, default= 1.28, help="Material parameter a")
     parser.add_argument("--a_f", type=float, default=1.685, help="Material parameter a_f")
     parser.add_argument("--mode", type=int, default=-1, help="Simulation mode")
     parser.add_argument("--patient_id", type=int, default=0, help="Patient ID")
@@ -132,6 +132,6 @@ if __name__ == "__main__":
 
     sim = Simulation(mode=args.mode, single_case=args.single_case, results_dir=Path(f"patient_{patient_id}/results-full"),
                      data_dir=Path(f"patient_{patient_id}/data-full"), solver_path=args.solver_path,
-                     PLV=args.PLV, PRV=args.PRV, Ta=args.Ta, N=args.N,
+                     PLV=args.PLV, PRV=args.PRV, Ta=args.Ta, N=args.N, eta=args.eta,
                      a=args.a, a_f=args.a_f)
     sim.run()
