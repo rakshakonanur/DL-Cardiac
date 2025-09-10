@@ -17,3 +17,10 @@ error*
 datasets/
 predicted/
 true/
+*.png
+pred/
+test/
+*.pdf
+ED/
+ES/
+

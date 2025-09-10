@@ -177,11 +177,11 @@ def main(patient_ED, patient_ES, unloaded):
 if __name__ == "__main__":
 
     patient_id = 0
-    ED_file = f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_20.00__PRVED_4.00__TA_0.0__a_2.28__af_1.69.bp"
-    u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"test/patient_{patient_id}/data-full"), resultsdir=Path(f"test/patient_{patient_id}/results-full"), case="ED")
+    ED_file = f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED/unloaded_to_ED_PLVED_1.20__PRVED_0.53__TA_0.0__eta_0.2__a_1.28__af_1.69.bp"
+    u_ED, coords, geodir = resample(bpl=ED_file, mode=-1, datadir=Path(f"../datasets/updated_final/1/patient_{patient_id}/data-full"), resultsdir=Path(f".../datasets/updated_final/1/patient_{patient_id}/results-full"), case="ED")
     points_ED, ES = deform(patient_id=patient_id)
 
-    outdir = Path(f"test/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
+    outdir = Path(f"../datasets/updated_final/1/patient_{patient_id}/results-full/mode_-1/unloaded_ED")
     mat_data = scipy.io.loadmat("../refs/BioBank_EDES_200.mat")
     pca = mat_data['pca200'][0, 0]
 
@@ -200,28 +200,45 @@ if __name__ == "__main__":
     vol_es = volume.find_volume(patient_es)
     print("ES Volume:", vol_es)
 
+     # Create PolyData
+    point_cloud = pv.PolyData(patient_ed)
+
+    # Save as VTP
+    point_cloud.save(f"unloaded_original_ED.vtp")
+
+    print("Saved unloaded.vtp successfully!")
+
+     # Create PolyData
+    point_cloud = pv.PolyData(patient_es)
+
+    # Save as VTP
+    point_cloud.save(f"unloaded_original_ES.vtp")
+
+    print("Saved unloaded.vtp successfully!")
+
+
     # Flatten into one dict
     flattened = {f"ED_{k}": float(v) for k, v in vol_ed.items()}
     flattened.update({f"ES_{k}": float(v) for k, v in vol_es.items()})
 
     # print(flattened)
 
-    def set_path(ukb_path: str):
-    # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
-        if ukb_path is None:
-            ukb_path =  "../clones/rk-ukb-atlas/src"
+    # def set_path(ukb_path: str):
+    # # Path to the ukb-atlas/src folder : important to download my fork of the UKB atlas
+    #     if ukb_path is None:
+    #         ukb_path =  "../clones/rk-ukb-atlas/src"
 
-        sys.path.insert(0, ukb_path)
-        import ukb, cardiac_geometries as cgx
-        from ukb import atlas, surface, mesh, clip
-        return ukb, atlas, surface, mesh, clip
+    #     sys.path.insert(0, ukb_path)
+    #     import ukb, cardiac_geometries as cgx
+    #     from ukb import atlas, surface, mesh, clip
+    #     return ukb, atlas, surface, mesh, clip
 
-    ukb, atlas, surface, mesh, clip = set_path("../clones/rk-ukb-atlas/src")
-    unwanted_nodes = (5630, 5655, 5696, 5729)
-    points = shape.Points(
-        ED=np.delete(patient_ed, unwanted_nodes, axis=0),
-        ES=np.delete(patient_es, unwanted_nodes, axis=0),
-        unloaded_ED=np.delete(patient_ed, unwanted_nodes, axis=0),
-    )
+    # ukb, atlas, surface, mesh, clip = set_path("../clones/rk-ukb-atlas/src")
+    # unwanted_nodes = (5630, 5655, 5696, 5729)
+    # points = shape.Points(
+    #     ED=np.delete(patient_ed, unwanted_nodes, axis=0),
+    #     ES=np.delete(patient_es, unwanted_nodes, axis=0),
+    #     unloaded_ED=np.delete(patient_ed, unwanted_nodes, axis=0),
+    # )
 
     ### LOOK AT ED/ FOR UNDEFORMED MESHES TO VALIDATE
