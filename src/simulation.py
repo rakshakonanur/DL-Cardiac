@@ -12,13 +12,13 @@ def parse_array_return_float(s):
     # Accepts "[1.0, 2.0]", "1.0,2.0" or just "1.0"
     s = s.strip("[]")
     parts = s.split(",")
-    return np.array([float(x) for x in parts]) if len(parts) > 1 else float(parts[0])
+    return np.array([float(x) for x in parts])  # always return an array
 
 def parse_array_return_int(s):
-    # Accepts "[1.0, 2.0]", "1.0,2.0" or just "1.0"
+    # Accepts "[1, 2]", "1,2" or just "1"
     s = s.strip("[]")
     parts = s.split(",")
-    return np.array([float(x) for x in parts]) if len(parts) > 1 else int(parts[0])
+    return np.array([int(float(x)) for x in parts])  # always return an array
 
 class Simulation:
     def __init__(self, mode: int = -1, case="unloaded_ED",
@@ -116,11 +116,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run cardiac mechanics simulation.")
     parser.add_argument("--case", type=str, default="unloaded_ED", help="Simulation case")
     parser.add_argument("--single_case", default=False, help="Run a single case - not for generating training data")
-    parser.add_argument("--PLV", type=parse_array, default=[20.0, 30.0], help="Left ventricular pressure")
-    parser.add_argument("--PRV", type=parse_array, default=[4.0, 8.0], help="Right ventricular pressure")
-    parser.add_argument("--Ta", type=parse_array, default=[0.0, 120.0], help="Active stress time constant")
+    parser.add_argument("--PLV", type=parse_array_return_float, default=[20.0, 30.0], help="Left ventricular pressure")
+    parser.add_argument("--PRV", type=parse_array_return_float, default=[4.0, 8.0], help="Right ventricular pressure")
+    parser.add_argument("--Ta", type=parse_array_return_float, default=[0.0, 120.0], help="Active stress time constant")
     parser.add_argument("--eta", type=float, default=0.3, help="Active stress scaling factor")
-    parser.add_argument("--N", type=np.array, default=[2000, 250], help="Number of time steps for simulation")
+    parser.add_argument("--N", type=parse_array_return_int, default=[2000, 250], help="Number of time steps for simulation")
     parser.add_argument("--a", type=float, default=2.280, help="Material parameter a")
     parser.add_argument("--a_f", type=float, default=1.685, help="Material parameter a_f")
     parser.add_argument("--mode", type=int, default=-1, help="Simulation mode")
